@@ -68,16 +68,76 @@ def initialize_session_state():
         st.session_state["start_time"] = time.time()
         st.session_state["log_messages"] = []
         
+        # ========== 学术研究文本分析功能扩展 ==========
+        
+        # 质性编码模块 (Requirements 1.1-1.7)
+        st.session_state["coding_scheme"] = None  # CodingScheme实例
+        st.session_state["coded_segments"] = []   # List[CodedSegment]
+        
+        # 词频与共现分析模块 (Requirements 2.1-2.7)
+        st.session_state["word_frequency"] = {}   # Dict[str, int] 词频统计结果
+        st.session_state["pos_tags"] = []         # List[List[str]] 词性标注结果
+        st.session_state["cooccurrence_matrix"] = {}  # Dict[Tuple[str, str], int] 共现矩阵
+        st.session_state["cooccurrence_window_size"] = 5  # 共现窗口大小
+        st.session_state["cooccurrence_min_freq"] = 2     # 最小共现频率阈值
+        
+        # 文本聚类与分类模块 (Requirements 3.1-3.7)
+        st.session_state["cluster_labels"] = None  # np.ndarray 聚类标签
+        st.session_state["cluster_algorithm"] = "kmeans"  # 聚类算法: kmeans, hierarchical
+        st.session_state["num_clusters"] = 3       # 聚类数量
+        st.session_state["cluster_keywords"] = {}  # Dict[int, List[str]] 聚类关键词
+        st.session_state["classification_labels"] = {}  # Dict[str, str] 分类标签
+        st.session_state["classifier_model"] = None     # 分类器模型
+        
+        # 时序演变分析模块 (Requirements 4.1-4.7)
+        st.session_state["time_labels"] = {}      # Dict[str, str] 文档时间标签
+        st.session_state["keyword_trends"] = {}   # Dict[str, Dict[str, int]] 关键词趋势
+        st.session_state["topic_evolution"] = {}  # Dict[str, List[float]] 主题演变
+        
+        # 文本比较分析模块 (Requirements 5.1-5.7)
+        st.session_state["similarity_matrix"] = None  # np.ndarray 相似度矩阵
+        st.session_state["common_keywords"] = []      # List[str] 共同关键词
+        st.session_state["unique_keywords"] = {}      # Dict[str, List[str]] 差异关键词
+        st.session_state["similar_segments"] = []     # List[Tuple] 相似段落
+        
+        # 引用与参考分析模块 (Requirements 6.1-6.7)
+        st.session_state["citations"] = {}        # Dict[str, List[str]] 引用关系
+        st.session_state["citation_network"] = None  # nx.DiGraph 引用网络
+        st.session_state["core_documents"] = []   # List[Tuple[str, int]] 核心文档
+        
+        # 语义网络分析模块 (Requirements 7.1-7.8)
+        st.session_state["semantic_network"] = None  # nx.Graph 语义网络
+        st.session_state["community_labels"] = {}    # Dict[str, int] 社区标签
+        st.session_state["centrality_metrics"] = {}  # Dict[str, Dict[str, float]] 中心性指标
+        st.session_state["center_word"] = None       # str 核心概念词
+        
+        # 文本统计与可读性分析模块 (Requirements 8.1-8.7)
+        st.session_state["text_statistics"] = {}  # Dict[str, dict] 文本统计结果
+        st.session_state["readability_scores"] = {}  # Dict[str, float] 可读性指数
+        
+        # 专业词典管理模块 (Requirements 9.1-9.10)
+        st.session_state["dictionary_manager"] = None  # DictionaryManager实例
+        st.session_state["active_dictionaries"] = []   # List[str] 激活的词典名称
+        st.session_state["term_frequencies"] = {}      # Dict[str, int] 术语频率统计
+        
         # 标记初始化完成
         st.session_state["initialized"] = True
 
 def save_session_state(path="session_state.json"):
     """保存当前会话状态到文件"""
     savable_state = {}
+    # 跳过不可JSON序列化的对象（包括新增模块的复杂对象）
+    skip_keys = [
+        'lda_model', 'corpus', 'dictionary', 'uploaded_files', 
+        'wordcloud_images', 'pyldavis_html', 'tsne_df', 'umap_df',
+        # 新增模块的复杂对象
+        'coding_scheme', 'classifier_model', 'citation_network',
+        'semantic_network', 'dictionary_manager', 'cluster_labels',
+        'similarity_matrix'
+    ]
+    
     for key, value in st.session_state.items():
-        # 跳过不可JSON序列化的对象
-        if key not in ['lda_model', 'corpus', 'dictionary', 'uploaded_files', 
-                      'wordcloud_images', 'pyldavis_html', 'tsne_df', 'umap_df']:
+        if key not in skip_keys:
             try:
                 # 测试是否可序列化
                 if isinstance(value, set):

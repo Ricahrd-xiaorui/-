@@ -1,0 +1,14 @@
+{
+  "dictionaries": {
+    "test": {
+      "name": "test",
+      "words": {
+        "人工智能": "n",
+        "机器学习": "n",
+        "深度学习": null
+      },
+      "description": "Test dictionary"
+    }
+  },
+  "active_dictionaries": []
+}

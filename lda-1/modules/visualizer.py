@@ -259,47 +259,135 @@ def render_visualizer():
     """渲染可视化分析模块"""
     st.header("可视化分析")
     
-    # 功能介绍
-    with st.expander("📖 功能介绍", expanded=False):
+    # 功能介绍与操作手册
+    with st.expander("📖 功能介绍与操作手册", expanded=False):
         st.markdown("""
-        **可视化分析模块** 提供多种图表展示LDA主题模型的分析结果。
+        ## 📊 可视化分析模块
         
-        **可视化类型：**
+        **功能概述**：提供多种图表展示LDA主题模型的分析结果，帮助理解和解释主题结构。
         
-        1. **🌥️ 主题词云**
-           - 以词云形式展示每个主题的关键词
-           - 词语大小表示其在主题中的重要程度
-           - 支持单个主题查看和全部主题概览
+        ---
         
-        2. **🔥 文档-主题分布热图**
-           - 展示每个文档在各主题上的分布比例
-           - 颜色深浅表示文档与主题的关联强度
-           - 帮助识别文档的主要主题归属
+        ### 🎯 使用场景
         
-        3. **🎨 交互式PyLDAvis**
-           - 专业的LDA可视化工具
-           - 左侧：主题间的距离和相对大小
-           - 右侧：选中主题的关键词及其频率
-           - 支持交互式探索主题结构
+        | 可视化类型 | 适用场景 | 输出用途 |
+        |------------|----------|----------|
+        | 主题词云 | 快速了解主题内容 | 论文配图、报告展示 |
+        | 文档-主题热图 | 分析文档归属 | 数据分析、分类依据 |
+        | PyLDAvis | 深入探索主题结构 | 交互式分析、演示 |
+        | 文档聚类 | 发现文档分布规律 | 聚类分析、异常检测 |
+        | 主题词分布 | 比较主题差异 | 主题解释、论文配图 |
+        | 相似性网络 | 分析主题关联 | 主题关系分析 |
         
-        4. **📍 文档聚类**
-           - 使用t-SNE或UMAP降维算法
-           - 将文档映射到二维空间展示
-           - 颜色表示聚类归属，形状表示主导主题
+        ---
         
-        5. **📊 主题词分布**
-           - 条形图展示每个主题的关键词概率分布
-           - 直观比较不同主题的词语构成
+        ### 📋 各可视化功能详解
         
-        6. **🕸️ 主题相似性网络**
-           - 网络图展示主题之间的相似关系
-           - 连线表示主题间存在相似性
-           - 可调节相似度阈值筛选连接
+        #### 1️⃣ 主题词云
+        **功能**：以词云形式展示每个主题的关键词，词语大小表示重要程度。
         
-        **使用建议：**
-        - 先查看PyLDAvis获得整体印象
-        - 再通过词云和词分布深入了解各主题内容
-        - 最后用文档聚类分析文档分布情况
+        **操作步骤**：
+        1. 选择要查看的主题编号
+        2. 调整最大词数和词云宽度
+        3. 点击"生成所有主题的词云"可一次性生成全部
+        
+        **参数说明**：
+        - 最大词数：词云中显示的词语数量（10-100）
+        - 词云宽度：图像宽度（400-1200像素）
+        
+        ---
+        
+        #### 2️⃣ 文档-主题分布热图
+        **功能**：展示每个文档在各主题上的分布比例，颜色深浅表示关联强度。
+        
+        **解读方法**：
+        - 颜色越深表示文档与该主题关联越强
+        - 每行代表一个文档，每列代表一个主题
+        - 可用于判断文档的主要主题归属
+        
+        ---
+        
+        #### 3️⃣ 交互式PyLDAvis
+        **功能**：专业的LDA可视化工具，提供交互式主题探索。
+        
+        **界面说明**：
+        - **左侧气泡图**：每个气泡代表一个主题
+          - 气泡大小：主题在语料库中的占比
+          - 气泡位置：主题间的相似度（距离越近越相似）
+        - **右侧条形图**：选中主题的关键词
+          - 蓝色条：词语在整个语料库中的频率
+          - 红色条：词语在选中主题中的频率
+        
+        **交互操作**：
+        - 点击气泡选择主题
+        - 调整λ滑块改变词语排序方式
+        - 悬停查看详细信息
+        
+        ---
+        
+        #### 4️⃣ 文档聚类
+        **功能**：使用降维算法将文档映射到二维空间，展示文档分布。
+        
+        **降维算法**：
+        - **t-SNE**：保持局部结构，适合发现聚类
+        - **UMAP**：保持全局结构，计算更快
+        
+        **参数说明**：
+        - 聚类数量：K-means聚类的簇数（建议与主题数相同）
+        
+        ---
+        
+        #### 5️⃣ 主题词分布
+        **功能**：条形图展示每个主题的关键词概率分布。
+        
+        **参数说明**：
+        - 每个主题显示词数：5-30个词
+        
+        ---
+        
+        #### 6️⃣ 主题相似性网络
+        **功能**：网络图展示主题之间的相似关系。
+        
+        **参数说明**：
+        - 相似度阈值：只显示相似度高于此值的连接（0.1-0.9）
+        
+        **解读方法**：
+        - 节点代表主题
+        - 连线表示主题间存在相似性
+        - 节点颜色深浅表示连接数量
+        
+        ---
+        
+        ### 💡 使用建议
+        
+        **分析流程建议**：
+        1. 先查看PyLDAvis获得整体印象
+        2. 通过词云和词分布深入了解各主题内容
+        3. 用文档聚类分析文档分布情况
+        4. 用相似性网络分析主题关联
+        
+        **论文配图建议**：
+        - 词云图：适合展示主题内容
+        - 热图：适合展示文档分类结果
+        - 聚类图：适合展示文档分布
+        
+        **图像保存**：
+        - 每个可视化都提供保存按钮
+        - HTML格式支持交互，适合演示
+        - PNG格式适合论文配图
+        
+        ---
+        
+        ### ❓ 常见问题
+        
+        **Q: PyLDAvis加载很慢怎么办？**
+        A: PyLDAvis需要计算大量数据，首次加载较慢，之后会使用缓存。
+        
+        **Q: 词云中文显示乱码怎么办？**
+        A: 系统会自动检测中文字体，如仍有问题请确保系统安装了中文字体。
+        
+        **Q: 如何选择合适的聚类数量？**
+        A: 建议与LDA主题数相同，或根据轮廓系数选择最优值。
         """)
     
     # 检查是否完成了模型训练
@@ -352,10 +440,13 @@ def render_visualizer():
         # 移除条件判断，直接显示内容
         st.subheader("主题词云")
         
+        # 获取模型实际的主题数量
+        actual_num_topics = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+        
         # 选择要查看的主题
         topic_id = st.selectbox(
             "选择主题",
-            range(st.session_state.num_topics),
+            range(actual_num_topics),
             format_func=lambda x: f"主题 {x+1}",
             key="wordcloud_topic_select"
         )
@@ -394,8 +485,8 @@ def render_visualizer():
         # 生成所有主题的词云按钮
         if st.button("生成所有主题的词云", key="gen_all_wordclouds"):
             with st.spinner("正在生成所有主题的词云..."):
-                # 创建图表
-                n_topics = st.session_state.num_topics
+                # 创建图表（使用实际主题数）
+                n_topics = actual_num_topics
                 n_cols = min(3, n_topics)
                 n_rows = (n_topics + n_cols - 1) // n_cols  # 向上取整
                 
@@ -530,6 +621,9 @@ def render_visualizer():
         # 移除条件判断，直接显示内容
         st.subheader("文档聚类可视化")
         
+        # 获取模型实际的主题数量
+        actual_num_topics_for_cluster = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+        
         col1, col2 = st.columns(2)
         with col1:
             method = st.radio("降维方法", ["t-SNE", "UMAP"], horizontal=True, key="clustering_method_radio")
@@ -538,7 +632,7 @@ def render_visualizer():
                 "聚类数量", 
                 min_value=2, 
                 max_value=min(10, len(st.session_state.corpus)),
-                value=min(st.session_state.num_topics, len(st.session_state.corpus)),
+                value=min(actual_num_topics_for_cluster, len(st.session_state.corpus)),
                 key="clustering_n_clusters"
             )
         
@@ -598,6 +692,9 @@ def render_visualizer():
         # 移除条件判断，直接显示内容
         st.subheader("主题词分布")
         
+        # 获取模型实际的主题数量
+        actual_num_topics_for_dist = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+        
         # 参数设置
         num_words = st.slider("每个主题显示词数", 5, 30, 15, key="topic_word_num_words")
         
@@ -616,7 +713,7 @@ def render_visualizer():
                 orientation='h',
                 title='主题词分布',
                 labels={'概率': '词语概率', '词语': '词语'},
-                height=max(600, num_words * 30 * (st.session_state.num_topics + 1) // 2)  # 根据词数和主题数调整高度
+                height=max(600, num_words * 30 * (actual_num_topics_for_dist + 1) // 2)  # 根据词数和主题数调整高度
             )
             
             # 调整图表布局
@@ -626,7 +723,7 @@ def render_visualizer():
             )
             
             # 对每个子图进行调整
-            for i in range(st.session_state.num_topics):
+            for i in range(actual_num_topics_for_dist):
                 fig.update_yaxes(showticklabels=True, col=i+1)
             
             st.plotly_chart(fig, use_container_width=True)
