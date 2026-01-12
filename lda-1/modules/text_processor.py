@@ -29,12 +29,34 @@ DEFAULT_COMMON_STOPWORDS = [
     "一定", "必须", "可以", "应该", "能够", "需要", "一些", "许多", "很多", "任何"
 ]
 
+# 获取项目根目录路径
+def get_project_root():
+    """获取项目根目录的绝对路径"""
+    # 当前文件在 modules/ 目录下，所以父目录的父目录是项目根目录
+    return Path(__file__).parent.parent.resolve()
+
 # 从项目根目录的stopwords.txt文件加载停用词
-def load_default_stopwords(file_path="stopwords.txt"):
-    """从默认文件加载停用词"""
+def load_default_stopwords(file_path=None):
+    """从默认文件加载停用词
+    
+    Args:
+        file_path: 停用词文件路径，如果为None则使用项目根目录下的stopwords.txt
+    """
     try:
+        if file_path is None:
+            # 使用项目根目录下的stopwords.txt
+            file_path = get_project_root() / "stopwords.txt"
+        else:
+            file_path = Path(file_path)
+        
+        if not file_path.exists():
+            log_message(f"停用词文件不存在: {file_path}", level="warning")
+            return set()
+        
         with open(file_path, 'r', encoding='utf-8') as f:
             words = f.read().strip().split('\n')
+            # 过滤空行
+            words = [w.strip() for w in words if w.strip()]
             log_message(f"已从默认文件加载 {len(words)} 个停用词")
             return set(words)
     except Exception as e:
