@@ -104,6 +104,7 @@ def initialize_session_state():
         st.session_state["citations"] = {}        # Dict[str, List[str]] 引用关系
         st.session_state["citation_network"] = None  # nx.DiGraph 引用网络
         st.session_state["core_documents"] = []   # List[Tuple[str, int]] 核心文档
+        st.session_state["citation_analyzer"] = None  # CitationAnalyzer实例
         
         # 语义网络分析模块 (Requirements 7.1-7.8)
         st.session_state["semantic_network"] = None  # nx.Graph 语义网络
