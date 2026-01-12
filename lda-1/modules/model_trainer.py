@@ -318,8 +318,37 @@ def plot_coherence_perplexity(results):
     - 对于u_mass连贯性测量，值通常为负，越接近0越好
     - 困惑度(log值)通常为负，值越大(越接近0)表示模型越好
     """
-    # 设置中文字体
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS']  # 优先使用的中文字体
+    # 设置中文字体 - 兼容不同操作系统
+    import matplotlib.font_manager as fm
+    import platform
+    
+    # 尝试查找可用的中文字体
+    chinese_fonts = []
+    system = platform.system()
+    
+    if system == 'Windows':
+        chinese_fonts = ['SimHei', 'Microsoft YaHei', 'SimSun', 'KaiTi']
+    elif system == 'Darwin':  # macOS
+        chinese_fonts = ['PingFang SC', 'Heiti SC', 'STHeiti', 'Arial Unicode MS']
+    else:  # Linux
+        chinese_fonts = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 
+                        'Noto Sans SC', 'Source Han Sans SC', 'Droid Sans Fallback',
+                        'AR PL UMing CN', 'AR PL UKai CN']
+    
+    # 查找系统中可用的字体
+    available_fonts = [f.name for f in fm.fontManager.ttflist]
+    font_found = None
+    for font in chinese_fonts:
+        if font in available_fonts:
+            font_found = font
+            break
+    
+    if font_found:
+        plt.rcParams['font.sans-serif'] = [font_found] + list(plt.rcParams['font.sans-serif'])
+    else:
+        # 如果没有找到中文字体，使用英文标签
+        plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial']
+    
     plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
     
     fig = plt.figure(figsize=(12, 5))
@@ -328,11 +357,27 @@ def plot_coherence_perplexity(results):
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     
+    # 根据是否有中文字体决定标签语言
+    if font_found:
+        title1 = '主题连贯性评分 (u_mass)'
+        xlabel = '主题数量'
+        ylabel1 = '连贯性分数 (越接近0越好)'
+        title2 = '模型困惑度 (log值)'
+        ylabel2 = '困惑度 (log值，越接近0越好)'
+        optimal_label = '最优'
+    else:
+        title1 = 'Topic Coherence (u_mass)'
+        xlabel = 'Number of Topics'
+        ylabel1 = 'Coherence Score (closer to 0 is better)'
+        title2 = 'Model Perplexity (log)'
+        ylabel2 = 'Perplexity (log, closer to 0 is better)'
+        optimal_label = 'Optimal'
+    
     # 绘制连贯性得分
     ax1.plot(results['topics_range'], results['coherence_values'], marker='o')
-    ax1.set_title('主题连贯性评分 (u_mass)')
-    ax1.set_xlabel('主题数量')
-    ax1.set_ylabel('连贯性分数 (越接近0越好)')
+    ax1.set_title(title1)
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(ylabel1)
     ax1.grid(True, alpha=0.3)
     
     # 在最优点添加标记
@@ -346,16 +391,16 @@ def plot_coherence_perplexity(results):
     optimal_topics = results['topics_range'][optimal_idx]
     optimal_coherence = results['coherence_values'][optimal_idx]
     ax1.scatter(optimal_topics, optimal_coherence, color='red', s=100, zorder=5)
-    ax1.annotate(f'最优: {optimal_topics}',
+    ax1.annotate(f'{optimal_label}: {optimal_topics}',
                 xy=(optimal_topics, optimal_coherence),
                 xytext=(optimal_topics+1, optimal_coherence),
                 arrowprops=dict(arrowstyle='->'))
     
     # 绘制困惑度
     ax2.plot(results['topics_range'], results['perplexity_values'], marker='o', color='orange')
-    ax2.set_title('模型困惑度 (log值)')
-    ax2.set_xlabel('主题数量')
-    ax2.set_ylabel('困惑度 (log值，越接近0越好)')
+    ax2.set_title(title2)
+    ax2.set_xlabel(xlabel)
+    ax2.set_ylabel(ylabel2)
     ax2.grid(True, alpha=0.3)
     
     # 在困惑度最优点添加标记 (对于log困惑度，值越大越好，因为通常为负值)
@@ -363,7 +408,7 @@ def plot_coherence_perplexity(results):
     perp_topics = results['topics_range'][perp_idx]
     perp_value = results['perplexity_values'][perp_idx]
     ax2.scatter(perp_topics, perp_value, color='red', s=100, zorder=5)
-    ax2.annotate(f'最优: {perp_topics}',
+    ax2.annotate(f'{optimal_label}: {perp_topics}',
                 xy=(perp_topics, perp_value),
                 xytext=(perp_topics+1, perp_value),
                 arrowprops=dict(arrowstyle='->'))
@@ -570,13 +615,14 @@ def render_model_trainer():
             
             with adv_col3:
                 # 根据语料库大小建议chunksize
-                default_chunksize = min(2000, len(st.session_state.corpus))
+                corpus_len = len(st.session_state.corpus) if st.session_state.corpus else 10
+                default_chunksize = max(1, min(2000, corpus_len))
                 chunksize = st.number_input(
                     "批量大小 (Chunksize)", 
-                    min_value=50, 
+                    min_value=1, 
                     max_value=10000, 
                     value=default_chunksize, 
-                    step=100,
+                    step=10,
                     help="在线学习的批量大小。大语料库用2000，小语料库可用全部文档数。",
                     key="model_chunksize_input"
                 )
