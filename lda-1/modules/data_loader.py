@@ -11,6 +11,14 @@ import gc
 from pathlib import Path
 from utils.session_state import get_session_state, log_message, update_progress
 
+# 尝试导入python-docx，如果失败则设置标志
+try:
+    from docx import Document
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    log_message("python-docx未安装，无法处理.docx文件", level="warning")
+
 # 大规模文件处理配置
 MAX_FILES = 10000  # 最大支持文件数
 BATCH_SIZE = 100   # 批量处理大小
@@ -187,6 +195,89 @@ def read_file_with_encoding(file_path):
         log_message(f"读取文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
         return ""
 
+def read_docx_file(file_path):
+    """读取docx文件内容"""
+    if not DOCX_AVAILABLE:
+        log_message(f"无法读取 {os.path.basename(file_path)}: python-docx未安装", level="error")
+        return ""
+    
+    try:
+        doc = Document(file_path)
+        # 提取所有段落文本
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:
+                paragraphs.append(text)
+        
+        # 也提取表格中的文本
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        paragraphs.append(text)
+        
+        content = '\n'.join(paragraphs)
+        return content
+    except Exception as e:
+        log_message(f"读取docx文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
+        return ""
+
+def read_docx_from_bytes(file_bytes, filename):
+    """从字节流读取docx文件内容"""
+    if not DOCX_AVAILABLE:
+        log_message(f"无法读取 {filename}: python-docx未安装", level="error")
+        return ""
+    
+    try:
+        import io
+        doc = Document(io.BytesIO(file_bytes))
+        # 提取所有段落文本
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:
+                paragraphs.append(text)
+        
+        # 也提取表格中的文本
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        paragraphs.append(text)
+        
+        content = '\n'.join(paragraphs)
+        return content
+    except Exception as e:
+        log_message(f"读取docx文件 {filename} 失败: {str(e)}", level="error")
+        return ""
+
+def get_supported_extensions():
+    """获取支持的文件扩展名列表"""
+    extensions = ['.txt']
+    if DOCX_AVAILABLE:
+        extensions.extend(['.docx', '.doc'])
+    return extensions
+
+def is_supported_file(filename):
+    """检查文件是否为支持的格式"""
+    ext = os.path.splitext(filename.lower())[1]
+    return ext in get_supported_extensions()
+
+def read_any_document(file_path):
+    """根据文件类型读取文档内容"""
+    ext = os.path.splitext(file_path.lower())[1]
+    
+    if ext == '.txt':
+        return read_file_with_encoding(file_path)
+    elif ext in ['.docx', '.doc']:
+        return read_docx_file(file_path)
+    else:
+        log_message(f"不支持的文件格式: {ext}", level="warning")
+        return ""
+
 def render_data_loader():
     """渲染数据加载模块"""
     st.header("数据加载")
@@ -236,7 +327,11 @@ def render_data_loader():
         | 格式 | 说明 | 编码支持 |
         |------|------|----------|
         | .txt | 纯文本文件 | UTF-8, GBK, GB2312, GB18030, Big5 |
-        | .zip | 压缩包（内含多个TXT） | 自动检测 |
+        | .docx | Word文档（推荐） | 自动解析 |
+        | .doc | 旧版Word文档 | 自动解析 |
+        | .zip | 压缩包（内含多个文档） | 自动检测 |
+        
+        **注意**：DOC/DOCX支持需要安装python-docx库。ZIP压缩包可包含TXT、DOC、DOCX混合文件。
         
         ---
         
@@ -292,12 +387,18 @@ def render_data_loader():
     if data_source == "上传文件":
         st.subheader("上传政策文件")
         
-        # 大文件上传提示
-        st.info("💡 提示：大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+        # 根据是否安装python-docx显示不同提示
+        if DOCX_AVAILABLE:
+            st.info("💡 提示：支持TXT、DOC、DOCX文件，大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+            accepted_types = ["txt", "doc", "docx", "zip"]
+        else:
+            st.info("💡 提示：大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+            st.warning("⚠️ python-docx未安装，暂不支持DOC/DOCX文件。如需支持请安装: pip install python-docx")
+            accepted_types = ["txt", "zip"]
         
         uploaded_files = st.file_uploader(
-            "上传TXT文本文件或ZIP压缩包", 
-            type=["txt", "zip"], 
+            "上传文本文件或ZIP压缩包", 
+            type=accepted_types, 
             accept_multiple_files=True,
             key="data_files_uploader"
         )
@@ -313,6 +414,7 @@ def render_data_loader():
                 status_text = st.empty()
                 
                 processed_count = 0
+                skipped_count = 0
                 
                 for i, uploaded_file in enumerate(uploaded_files):
                     status_text.text(f"处理文件 {i+1}/{total_files}: {uploaded_file.name}")
@@ -325,40 +427,62 @@ def render_data_loader():
                                 f.write(uploaded_file.getbuffer())
                             
                             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                                # 获取ZIP中的文件列表
-                                txt_files = [f for f in zip_ref.namelist() if f.endswith('.txt')]
-                                total_txt = len(txt_files)
+                                # 获取ZIP中支持的文件列表
+                                supported_files = [f for f in zip_ref.namelist() if is_supported_file(f)]
+                                total_supported = len(supported_files)
                                 
                                 zip_ref.extractall(temp_dir)
                                 
                                 # 批量处理ZIP中的文件
-                                for j, file in enumerate(txt_files):
+                                for j, file in enumerate(supported_files):
                                     if j % 50 == 0:
-                                        progress = (i + j/total_txt) / total_files
+                                        progress = (i + j/max(total_supported, 1)) / total_files
                                         progress_bar.progress(min(progress, 1.0))
-                                        status_text.text(f"处理ZIP文件 {i+1}/{total_files}，内部文件 {j+1}/{total_txt}")
+                                        status_text.text(f"处理ZIP文件 {i+1}/{total_files}，内部文件 {j+1}/{total_supported}")
                                     
                                     file_path = os.path.join(temp_dir, file)
                                     if os.path.isfile(file_path):
-                                        content = read_file_with_encoding(file_path)
-                                        if content:
+                                        content = read_any_document(file_path)
+                                        if content and content.strip():
                                             filename = os.path.basename(file)
                                             st.session_state.file_contents[filename] = content
                                             st.session_state.file_names.append(filename)
                                             st.session_state.raw_texts.append(content)
                                             processed_count += 1
+                                        else:
+                                            skipped_count += 1
                                     
                                     # 定期垃圾回收
                                     if j > 0 and j % 500 == 0:
                                         gc.collect()
-                                        
-                    elif uploaded_file.name.endswith('.txt'):
+                    
+                    elif uploaded_file.name.lower().endswith('.txt'):
                         # 处理单个TXT文件
                         content = uploaded_file.read().decode('utf-8', errors='replace')
-                        st.session_state.file_contents[uploaded_file.name] = content
-                        st.session_state.file_names.append(uploaded_file.name)
-                        st.session_state.raw_texts.append(content)
-                        processed_count += 1
+                        if content and content.strip():
+                            st.session_state.file_contents[uploaded_file.name] = content
+                            st.session_state.file_names.append(uploaded_file.name)
+                            st.session_state.raw_texts.append(content)
+                            processed_count += 1
+                        else:
+                            skipped_count += 1
+                    
+                    elif uploaded_file.name.lower().endswith(('.docx', '.doc')):
+                        # 处理DOC/DOCX文件
+                        if DOCX_AVAILABLE:
+                            file_bytes = uploaded_file.read()
+                            content = read_docx_from_bytes(file_bytes, uploaded_file.name)
+                            if content and content.strip():
+                                st.session_state.file_contents[uploaded_file.name] = content
+                                st.session_state.file_names.append(uploaded_file.name)
+                                st.session_state.raw_texts.append(content)
+                                processed_count += 1
+                            else:
+                                skipped_count += 1
+                                log_message(f"文件 {uploaded_file.name} 内容为空，已跳过", level="warning")
+                        else:
+                            skipped_count += 1
+                            log_message(f"无法处理 {uploaded_file.name}: python-docx未安装", level="warning")
                     
                     progress_bar.progress((i + 1) / total_files)
                 
@@ -368,7 +492,10 @@ def render_data_loader():
                 log_message(f"已加载 {processed_count} 个文件", level="success")
                 
                 # 显示加载结果
-                st.success(f"成功加载 {processed_count} 个文件")
+                if skipped_count > 0:
+                    st.success(f"成功加载 {processed_count} 个文件，跳过 {skipped_count} 个空文件或不支持的文件")
+                else:
+                    st.success(f"成功加载 {processed_count} 个文件")
                 
                 # 内存警告
                 if processed_count > MEMORY_WARNING_THRESHOLD:
