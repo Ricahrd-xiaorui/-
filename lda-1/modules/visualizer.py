@@ -20,10 +20,10 @@ from datetime import datetime
 import io
 import base64
 from utils.session_state import get_session_state, log_message, update_progress
+from utils.font_config import setup_matplotlib_chinese, get_plotly_font, get_label, L
 
 # 配置matplotlib中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS']
-plt.rcParams['axes.unicode_minus'] = False
+setup_matplotlib_chinese()
 
 def get_system_font_path():
     """获取系统中文字体路径"""

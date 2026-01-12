@@ -17,6 +17,15 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 import pandas as pd
 
+# 导入字体配置
+try:
+    from utils.font_config import get_plotly_font, get_label
+except ImportError:
+    def get_plotly_font():
+        return "Arial, sans-serif"
+    def get_label(cn, en):
+        return cn
+
 
 class FrequencyAnalyzer:
     """
@@ -1306,7 +1315,7 @@ def render_cooccurrence_analyzer():
                             thickness=15,
                             title=dict(
                                 text='连接数' if node_size_mode == "度数 (连接数)" else '共现频率',
-                                font=dict(size=12, family="SimHei, Arial")
+                                font=dict(size=12, family=get_plotly_font())
                             ),
                             xanchor='left',
                             tickfont=dict(size=10)
@@ -1324,7 +1333,7 @@ def render_cooccurrence_analyzer():
                         textfont=dict(
                             size=font_size,
                             color=scheme["font_color"],
-                            family="SimHei, Arial, sans-serif"
+                            family=get_plotly_font()
                         ),
                         marker=dict(
                             showscale=show_colorbar and not use_discrete_colors,
@@ -1362,7 +1371,7 @@ def render_cooccurrence_analyzer():
                         layout=go.Layout(
                             title=dict(
                                 text=custom_title if show_title else "",
-                                font=dict(size=16, family="SimHei, Arial", color=scheme["font_color"]),
+                                font=dict(size=16, family=get_plotly_font(), color=scheme["font_color"]),
                                 x=0.5,
                                 xanchor='center'
                             ) if show_title else None,

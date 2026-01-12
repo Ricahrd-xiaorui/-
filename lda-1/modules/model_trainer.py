@@ -318,38 +318,10 @@ def plot_coherence_perplexity(results):
     - 对于u_mass连贯性测量，值通常为负，越接近0越好
     - 困惑度(log值)通常为负，值越大(越接近0)表示模型越好
     """
-    # 设置中文字体 - 兼容不同操作系统
-    import matplotlib.font_manager as fm
-    import platform
+    from utils.font_config import setup_matplotlib_chinese, get_label, L
     
-    # 尝试查找可用的中文字体
-    chinese_fonts = []
-    system = platform.system()
-    
-    if system == 'Windows':
-        chinese_fonts = ['SimHei', 'Microsoft YaHei', 'SimSun', 'KaiTi']
-    elif system == 'Darwin':  # macOS
-        chinese_fonts = ['PingFang SC', 'Heiti SC', 'STHeiti', 'Arial Unicode MS']
-    else:  # Linux
-        chinese_fonts = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 
-                        'Noto Sans SC', 'Source Han Sans SC', 'Droid Sans Fallback',
-                        'AR PL UMing CN', 'AR PL UKai CN']
-    
-    # 查找系统中可用的字体
-    available_fonts = [f.name for f in fm.fontManager.ttflist]
-    font_found = None
-    for font in chinese_fonts:
-        if font in available_fonts:
-            font_found = font
-            break
-    
-    if font_found:
-        plt.rcParams['font.sans-serif'] = [font_found] + list(plt.rcParams['font.sans-serif'])
-    else:
-        # 如果没有找到中文字体，使用英文标签
-        plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial']
-    
-    plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
+    # 设置中文字体
+    use_chinese = setup_matplotlib_chinese()
     
     fig = plt.figure(figsize=(12, 5))
     
@@ -357,21 +329,13 @@ def plot_coherence_perplexity(results):
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     
-    # 根据是否有中文字体决定标签语言
-    if font_found:
-        title1 = '主题连贯性评分 (u_mass)'
-        xlabel = '主题数量'
-        ylabel1 = '连贯性分数 (越接近0越好)'
-        title2 = '模型困惑度 (log值)'
-        ylabel2 = '困惑度 (log值，越接近0越好)'
-        optimal_label = '最优'
-    else:
-        title1 = 'Topic Coherence (u_mass)'
-        xlabel = 'Number of Topics'
-        ylabel1 = 'Coherence Score (closer to 0 is better)'
-        title2 = 'Model Perplexity (log)'
-        ylabel2 = 'Perplexity (log, closer to 0 is better)'
-        optimal_label = 'Optimal'
+    # 获取标签
+    title1 = get_label('主题连贯性评分 (u_mass)', 'Topic Coherence (u_mass)')
+    xlabel = get_label('主题数量', 'Number of Topics')
+    ylabel1 = get_label('连贯性分数 (越接近0越好)', 'Coherence Score (closer to 0 is better)')
+    title2 = get_label('模型困惑度 (log值)', 'Model Perplexity (log)')
+    ylabel2 = get_label('困惑度 (log值，越接近0越好)', 'Perplexity (log, closer to 0 is better)')
+    optimal_label = get_label('最优', 'Optimal')
     
     # 绘制连贯性得分
     ax1.plot(results['topics_range'], results['coherence_values'], marker='o')
@@ -382,7 +346,6 @@ def plot_coherence_perplexity(results):
     
     # 在最优点添加标记
     if all(cv < 0 for cv in results['coherence_values'] if cv != 0):
-        # 所有值都是负值，找绝对值最小的
         abs_values = [abs(cv) for cv in results['coherence_values']]
         optimal_idx = np.argmin(abs_values)
     else:
@@ -403,7 +366,7 @@ def plot_coherence_perplexity(results):
     ax2.set_ylabel(ylabel2)
     ax2.grid(True, alpha=0.3)
     
-    # 在困惑度最优点添加标记 (对于log困惑度，值越大越好，因为通常为负值)
+    # 在困惑度最优点添加标记
     perp_idx = np.argmax(results['perplexity_values'])
     perp_topics = results['topics_range'][perp_idx]
     perp_value = results['perplexity_values'][perp_idx]

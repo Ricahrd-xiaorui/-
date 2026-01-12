@@ -22,8 +22,8 @@ from datetime import datetime
 from pathlib import Path
 
 # 配置matplotlib中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS']
-plt.rcParams['axes.unicode_minus'] = False
+from utils.font_config import setup_matplotlib_chinese
+setup_matplotlib_chinese()
 
 # 导入核心模块
 from modules.sidebar import render_system_sidebar

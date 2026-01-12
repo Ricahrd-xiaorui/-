@@ -307,21 +307,21 @@ def render_semantic_network():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        min_weight = st.slider("最小边权重", min_value=1, max_value=20, value=2, help="过滤共现频率低于此值的边")
+        min_weight = st.slider("最小边权重", min_value=1, max_value=20, value=2, help="过滤共现频率低于此值的边", key="semantic_min_weight")
     
     with col2:
-        max_nodes = st.slider("最大节点数", min_value=20, max_value=200, value=50, help="可视化显示的最大节点数量")
+        max_nodes = st.slider("最大节点数", min_value=20, max_value=200, value=50, help="可视化显示的最大节点数量", key="semantic_max_nodes")
     
     with col3:
-        center_word = st.text_input("核心概念词（可选）", value=st.session_state.get("center_word", ""), help="输入核心概念词，将显示以该词为中心的子网络")
+        center_word = st.text_input("核心概念词（可选）", value=st.session_state.get("center_word", ""), help="输入核心概念词，将显示以该词为中心的子网络", key="semantic_center_word")
         st.session_state["center_word"] = center_word
     
     if center_word:
-        max_depth = st.slider("网络深度", min_value=1, max_value=3, value=2, help="从核心概念扩展的最大跳数")
+        max_depth = st.slider("网络深度", min_value=1, max_value=3, value=2, help="从核心概念扩展的最大跳数", key="semantic_max_depth")
     else:
         max_depth = 2
 
-    if st.button("🔨 构建语义网络", type="primary"):
+    if st.button("🔨 构建语义网络", type="primary", key="semantic_build_btn"):
         if not HAS_NETWORKX:
             st.error("需要安装networkx库: pip install networkx")
             return
@@ -397,13 +397,13 @@ def _render_network_visualization(builder, max_nodes: int):
         vis_col1, vis_col2, vis_col3 = st.columns(3)
         
         with vis_col1:
-            layout_algorithm = st.selectbox("布局算法", ["spring (力导向)", "kamada_kawai", "circular", "shell", "spectral"], index=0)
+            layout_algorithm = st.selectbox("布局算法", ["spring (力导向)", "kamada_kawai", "circular", "shell", "spectral"], index=0, key="semantic_layout_algo")
         
         with vis_col2:
-            color_by = st.selectbox("节点颜色依据", ["社区", "度中心性", "介数中心性"], index=0)
+            color_by = st.selectbox("节点颜色依据", ["社区", "度中心性", "介数中心性"], index=0, key="semantic_color_by")
         
         with vis_col3:
-            show_labels = st.checkbox("显示节点标签", value=True)
+            show_labels = st.checkbox("显示节点标签", value=True, key="semantic_show_labels")
     
     nodes, edges = builder.to_vis_data(max_nodes)
     
@@ -568,9 +568,9 @@ def _render_centrality_analysis(builder, centrality: Dict[str, Dict[str, float]]
         'eigenvector': '特征向量中心性'
     }
     
-    selected_metric = st.selectbox("选择中心性指标", list(metric_names.keys()), format_func=lambda x: metric_names[x])
+    selected_metric = st.selectbox("选择中心性指标", list(metric_names.keys()), format_func=lambda x: metric_names[x], key="semantic_centrality_metric")
     
-    top_n = st.slider("显示前N个节点", min_value=5, max_value=50, value=20)
+    top_n = st.slider("显示前N个节点", min_value=5, max_value=50, value=20, key="semantic_centrality_top_n")
     top_nodes = builder.get_top_central_nodes(selected_metric, top_n)
     
     if top_nodes:
