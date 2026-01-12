@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-政策文件LDA主题模型可视化分析系统 - 主入口
+文件可视化分析系统 - 主入口
 
 UI结构：
 1. 数据加载 - 文件上传、预览
@@ -60,7 +60,7 @@ render_qualitative_coding = safe_import_render_function('qualitative_coding', 'r
 
 # 页面配置
 st.set_page_config(
-    page_title="政策文件LDA主题模型分析系统",
+    page_title="文件可视化分析系统",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -213,7 +213,7 @@ def main():
     initialize_session_state()
     
     # 标题
-    st.title("📊 政策文件LDA主题模型可视化分析系统")
+    st.title("📊 文件可视化分析系统")
     
     # 创建基本目录结构
     Path("temp").mkdir(exist_ok=True)
@@ -268,7 +268,7 @@ def main():
     
     # 页脚
     st.markdown("---")
-    st.caption("政策文件LDA主题模型可视化分析系统 | 版本 2.0.0 | 含基础文本分析与高级研究功能")
+    st.caption("文件可视化分析系统 | 版本 2.0.0 |")
 
 
 if __name__ == "__main__":
