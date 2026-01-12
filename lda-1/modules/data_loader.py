@@ -17,7 +17,18 @@ try:
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
-    log_message("python-docx未安装，无法处理.docx文件", level="warning")
+
+# 尝试导入PyPDF2或pdfplumber，如果失败则设置标志
+PDF_LIBRARY = None
+try:
+    import pdfplumber
+    PDF_LIBRARY = "pdfplumber"
+except ImportError:
+    try:
+        import PyPDF2
+        PDF_LIBRARY = "PyPDF2"
+    except ImportError:
+        PDF_LIBRARY = None
 
 # 大规模文件处理配置
 MAX_FILES = 10000  # 最大支持文件数
@@ -254,11 +265,78 @@ def read_docx_from_bytes(file_bytes, filename):
         log_message(f"读取docx文件 {filename} 失败: {str(e)}", level="error")
         return ""
 
+def read_pdf_file(file_path):
+    """读取PDF文件内容"""
+    if PDF_LIBRARY is None:
+        log_message(f"无法读取 {os.path.basename(file_path)}: PDF库未安装", level="error")
+        return ""
+    
+    try:
+        if PDF_LIBRARY == "pdfplumber":
+            import pdfplumber
+            text_content = []
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+        
+        elif PDF_LIBRARY == "PyPDF2":
+            import PyPDF2
+            text_content = []
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+    
+    except Exception as e:
+        log_message(f"读取PDF文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
+        return ""
+
+def read_pdf_from_bytes(file_bytes, filename):
+    """从字节流读取PDF文件内容"""
+    if PDF_LIBRARY is None:
+        log_message(f"无法读取 {filename}: PDF库未安装", level="error")
+        return ""
+    
+    try:
+        import io
+        
+        if PDF_LIBRARY == "pdfplumber":
+            import pdfplumber
+            text_content = []
+            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+        
+        elif PDF_LIBRARY == "PyPDF2":
+            import PyPDF2
+            text_content = []
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_content.append(page_text)
+            return '\n'.join(text_content)
+    
+    except Exception as e:
+        log_message(f"读取PDF文件 {filename} 失败: {str(e)}", level="error")
+        return ""
+
 def get_supported_extensions():
     """获取支持的文件扩展名列表"""
     extensions = ['.txt']
     if DOCX_AVAILABLE:
         extensions.extend(['.docx', '.doc'])
+    if PDF_LIBRARY is not None:
+        extensions.append('.pdf')
     return extensions
 
 def is_supported_file(filename):
@@ -274,6 +352,8 @@ def read_any_document(file_path):
         return read_file_with_encoding(file_path)
     elif ext in ['.docx', '.doc']:
         return read_docx_file(file_path)
+    elif ext == '.pdf':
+        return read_pdf_file(file_path)
     else:
         log_message(f"不支持的文件格式: {ext}", level="warning")
         return ""
@@ -329,9 +409,14 @@ def render_data_loader():
         | .txt | 纯文本文件 | UTF-8, GBK, GB2312, GB18030, Big5 |
         | .docx | Word文档（推荐） | 自动解析 |
         | .doc | 旧版Word文档 | 自动解析 |
+        | .pdf | PDF文档 | 自动提取文本 |
         | .zip | 压缩包（内含多个文档） | 自动检测 |
         
-        **注意**：DOC/DOCX支持需要安装python-docx库。ZIP压缩包可包含TXT、DOC、DOCX混合文件。
+        **注意**：
+        - DOC/DOCX支持需要安装python-docx库：`pip install python-docx`
+        - PDF支持需要安装pdfplumber或PyPDF2库：`pip install pdfplumber` 或 `pip install PyPDF2`
+        - ZIP压缩包可包含TXT、DOC、DOCX、PDF混合文件
+        - 扫描版PDF（图片PDF）无法提取文本，建议使用文字版PDF
         
         ---
         
@@ -387,14 +472,30 @@ def render_data_loader():
     if data_source == "上传文件":
         st.subheader("上传政策文件")
         
-        # 根据是否安装python-docx显示不同提示
+        # 构建支持的文件类型列表和提示信息
+        accepted_types = ["txt", "zip"]
+        supported_formats = ["TXT"]
+        
         if DOCX_AVAILABLE:
-            st.info("💡 提示：支持TXT、DOC、DOCX文件，大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
-            accepted_types = ["txt", "doc", "docx", "zip"]
-        else:
-            st.info("💡 提示：大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
-            st.warning("⚠️ python-docx未安装，暂不支持DOC/DOCX文件。如需支持请安装: pip install python-docx")
-            accepted_types = ["txt", "zip"]
+            accepted_types.extend(["doc", "docx"])
+            supported_formats.extend(["DOC", "DOCX"])
+        
+        if PDF_LIBRARY is not None:
+            accepted_types.append("pdf")
+            supported_formats.append("PDF")
+        
+        format_str = "、".join(supported_formats)
+        st.info(f"💡 提示：支持{format_str}文件，大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+        
+        # 显示未安装的库提示
+        missing_libs = []
+        if not DOCX_AVAILABLE:
+            missing_libs.append("python-docx (DOC/DOCX支持)")
+        if PDF_LIBRARY is None:
+            missing_libs.append("pdfplumber或PyPDF2 (PDF支持)")
+        
+        if missing_libs:
+            st.warning(f"⚠️ 以下库未安装，部分格式不可用: {', '.join(missing_libs)}")
         
         uploaded_files = st.file_uploader(
             "上传文本文件或ZIP压缩包", 
@@ -483,6 +584,23 @@ def render_data_loader():
                         else:
                             skipped_count += 1
                             log_message(f"无法处理 {uploaded_file.name}: python-docx未安装", level="warning")
+                    
+                    elif uploaded_file.name.lower().endswith('.pdf'):
+                        # 处理PDF文件
+                        if PDF_LIBRARY is not None:
+                            file_bytes = uploaded_file.read()
+                            content = read_pdf_from_bytes(file_bytes, uploaded_file.name)
+                            if content and content.strip():
+                                st.session_state.file_contents[uploaded_file.name] = content
+                                st.session_state.file_names.append(uploaded_file.name)
+                                st.session_state.raw_texts.append(content)
+                                processed_count += 1
+                            else:
+                                skipped_count += 1
+                                log_message(f"文件 {uploaded_file.name} 内容为空或无法提取文本，已跳过", level="warning")
+                        else:
+                            skipped_count += 1
+                            log_message(f"无法处理 {uploaded_file.name}: PDF库未安装", level="warning")
                     
                     progress_bar.progress((i + 1) / total_files)
                 
