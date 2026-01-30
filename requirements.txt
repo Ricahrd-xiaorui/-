@@ -14,4 +14,6 @@ hdbscan>=0.8.29
 networkx>=2.8.0
 tqdm>=4.64.0
 scipy>=1.8.0
-pillow>=9.0.0 
+pillow>=9.0.0
+python-docx>=0.8.11
+pdfplumber>=0.9.0

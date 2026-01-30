@@ -14,10 +14,14 @@ import streamlit as st
 
 # 设置中文字体
 try:
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
-    plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+    from utils.font_config import setup_matplotlib_chinese
+    setup_matplotlib_chinese()
 except:
-    st.warning("未能设置中文字体，可能导致中文显示异常")
+    try:
+        plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+        plt.rcParams['axes.unicode_minus'] = False
+    except:
+        pass
 
 def calculate_topic_distribution(doc_topic_dist):
     """

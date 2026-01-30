@@ -10,6 +10,144 @@ def render_evaluation():
     """渲染模型评估模块"""
     st.header("模型评估")
     
+    # 功能介绍与操作手册
+    with st.expander("📖 功能介绍与操作手册", expanded=False):
+        st.markdown("""
+        ## 📈 模型评估模块
+        
+        **功能概述**：提供多维度的LDA模型质量评估，帮助判断模型效果和主题质量。
+        
+        ---
+        
+        ### 🎯 使用场景
+        
+        | 评估类型 | 适用场景 | 关注指标 |
+        |----------|----------|----------|
+        | 主题一致性评估 | 判断主题质量 | u_mass、c_v连贯性分数 |
+        | 模型性能评估 | 评估模型拟合度 | 困惑度、主题覆盖率 |
+        | 文档聚类评估 | 评估聚类效果 | 轮廓系数、主题内聚度 |
+        | 交叉验证 | 评估模型稳定性 | 各指标的变异系数 |
+        
+        ---
+        
+        ### 📋 评估指标详解
+        
+        #### 1️⃣ 主题一致性（Coherence）
+        
+        **u_mass连贯性**：
+        - 基于文档共现计算
+        - 值通常为负数，越接近0越好
+        - 范围：通常在-14到0之间
+        - 解读：> -2 优秀，-2到-4 良好，< -4 需改进
+        
+        **c_v连贯性**：
+        - 基于滑动窗口和词向量
+        - 值为正数，越大越好
+        - 范围：0到1之间
+        - 解读：> 0.6 优秀，0.4-0.6 良好，< 0.4 需改进
+        
+        ---
+        
+        #### 2️⃣ 困惑度（Perplexity）
+        
+        **定义**：衡量模型对未见数据的预测能力
+        
+        **解读**：
+        - 值为负数（对数形式）
+        - 越接近0表示模型越好
+        - 用于比较不同参数的模型
+        
+        **注意**：困惑度低不一定意味着主题可解释性好
+        
+        ---
+        
+        #### 3️⃣ 轮廓系数（Silhouette Score）
+        
+        **定义**：衡量聚类的紧密度和分离度
+        
+        **范围**：-1到1
+        
+        **解读**：
+        - > 0.5：聚类结构良好
+        - 0.2-0.5：聚类结构合理
+        - < 0.2：聚类结构较弱
+        - < 0：样本可能被错误分类
+        
+        ---
+        
+        #### 4️⃣ 主题覆盖率
+        
+        **定义**：各主题被文档覆盖的情况
+        
+        **关注点**：
+        - 是否有主题没有文档归属
+        - 各主题的文档分布是否均衡
+        - 是否存在主导主题
+        
+        ---
+        
+        ### 📋 操作步骤
+        
+        **主题一致性评估**：
+        1. 查看u_mass和c_v连贯性分数
+        2. 选择具体主题查看关键词
+        3. 手动评估主题的一致性和可解释性
+        4. 为主题命名并保存评估结果
+        
+        **模型性能评估**：
+        1. 查看困惑度分数
+        2. 分析主题分布情况
+        3. 检查主题覆盖率
+        4. 识别未被覆盖的主题
+        
+        **文档聚类评估**：
+        1. 查看轮廓系数
+        2. 分析主题内聚度
+        3. 查看主题间距离热力图
+        
+        **交叉验证**：
+        1. 设置交叉验证折数
+        2. 选择评估指标
+        3. 执行交叉验证
+        4. 分析模型稳定性
+        
+        ---
+        
+        ### 💡 使用建议
+        
+        **学术研究建议**：
+        - 报告u_mass和c_v两种连贯性分数
+        - 说明主题数量的选择依据
+        - 提供主题的人工解释和命名
+        - 讨论模型的局限性
+        
+        **模型优化建议**：
+        - 如果连贯性分数低，尝试调整主题数量
+        - 如果轮廓系数低，检查预处理参数
+        - 如果主题覆盖不均，考虑减少主题数
+        
+        **评估报告建议**：
+        - 综合多个指标进行评估
+        - 结合定量指标和定性分析
+        - 与领域专家讨论主题解释
+        
+        ---
+        
+        ### ❓ 常见问题
+        
+        **Q: 连贯性分数多少算好？**
+        A: u_mass > -2 或 c_v > 0.5 通常表示较好的主题质量，但需结合具体领域判断。
+        
+        **Q: 为什么有些主题没有文档归属？**
+        A: 可能是主题数量设置过多，建议减少主题数或调整模型参数。
+        
+        **Q: 如何在论文中报告评估结果？**
+        A: 建议报告连贯性分数、困惑度、主题数量选择依据，并提供主题关键词表。
+        
+        **Q: 交叉验证的变异系数多少算稳定？**
+        A: 变异系数 < 5% 表示非常稳定，5-10% 表示稳定，> 15% 表示不稳定。
+        """)
+    
     # 初始化会话状态变量
     if "coherence_score" not in st.session_state:
         st.session_state.coherence_score = None
@@ -79,10 +217,13 @@ def render_evaluation():
         # 主题关键词一致性
         st.subheader("主题关键词一致性")
         
+        # 获取模型实际的主题数量
+        actual_num_topics = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+        
         # 选择要评估的主题
         topic_to_evaluate = st.selectbox(
             "选择要评估的主题",
-            range(st.session_state.num_topics),
+            range(actual_num_topics),
             format_func=lambda x: f"主题 {x+1}"
         )
         
@@ -186,12 +327,15 @@ def render_evaluation():
             plt.tight_layout()
             st.pyplot(fig)
             
+            # 获取模型实际的主题数量
+            actual_num_topics_coverage = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+            
             # 计算主题覆盖率
             dominant_topics = np.argmax(doc_topic_dist, axis=1)
             topic_coverage = pd.Series(dominant_topics).value_counts().sort_index()
             
             # 检查是否有未被覆盖的主题
-            uncovered_topics = set(range(st.session_state.num_topics)) - set(topic_coverage.index)
+            uncovered_topics = set(range(actual_num_topics_coverage)) - set(topic_coverage.index)
             
             if uncovered_topics:
                 st.warning(f"有 {len(uncovered_topics)} 个主题没有任何文档归属: {', '.join([f'主题 {i+1}' for i in uncovered_topics])}")
@@ -271,20 +415,23 @@ def render_evaluation():
             st.subheader("主题内聚度和主题间距离")
             
             try:
+                # 获取模型实际的主题数量
+                actual_num_topics_cohesion = st.session_state.lda_model.num_topics if st.session_state.lda_model else st.session_state.num_topics
+                
                 # 计算每个主题的中心点
                 topic_centers = []
-                for i in range(st.session_state.num_topics):
+                for i in range(actual_num_topics_cohesion):
                     topic_docs = doc_topic_dist[dominant_topics == i]
                     if len(topic_docs) > 0:
                         topic_centers.append(np.mean(topic_docs, axis=0))
                     else:
-                        topic_centers.append(np.zeros(st.session_state.num_topics))
+                        topic_centers.append(np.zeros(actual_num_topics_cohesion))
                 
                 topic_centers = np.array(topic_centers)
                 
                 # 计算主题内聚度 (平均距离)
                 intra_distances = []
-                for i in range(st.session_state.num_topics):
+                for i in range(actual_num_topics_cohesion):
                     topic_docs = doc_topic_dist[dominant_topics == i]
                     if len(topic_docs) > 0:
                         center = topic_centers[i]
@@ -436,7 +583,7 @@ def render_evaluation():
     # 导出评估报告
     st.subheader("导出评估报告")
     
-    if st.button("生成评估报告", key="generate_report", type="primary"):
+    if st.button("生成评估报告", key="generate_evaluation_report", type="primary"):
         st.info("评估报告生成功能尚未实现。此功能将在后续版本中添加。")
         
         # TODO: 实现评估报告生成功能 

@@ -11,6 +11,30 @@ import gc
 from pathlib import Path
 from utils.session_state import get_session_state, log_message, update_progress
 
+# 尝试导入python-docx，如果失败则设置标志
+try:
+    from docx import Document
+    DOCX_AVAILABLE = True
+    print("✓ python-docx 导入成功")
+except ImportError as e:
+    DOCX_AVAILABLE = False
+    print(f"✗ python-docx 导入失败: {e}")
+
+# 尝试导入PyPDF2或pdfplumber，如果失败则设置标志
+PDF_LIBRARY = None
+try:
+    import pdfplumber
+    PDF_LIBRARY = "pdfplumber"
+    print("✓ pdfplumber 导入成功")
+except ImportError:
+    try:
+        import PyPDF2
+        PDF_LIBRARY = "PyPDF2"
+        print("✓ PyPDF2 导入成功")
+    except ImportError as e:
+        PDF_LIBRARY = None
+        print(f"✗ PDF库导入失败: {e}")
+
 # 大规模文件处理配置
 MAX_FILES = 10000  # 最大支持文件数
 BATCH_SIZE = 100   # 批量处理大小
@@ -187,29 +211,259 @@ def read_file_with_encoding(file_path):
         log_message(f"读取文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
         return ""
 
+def read_docx_file(file_path):
+    """读取docx文件内容"""
+    if not DOCX_AVAILABLE:
+        log_message(f"无法读取 {os.path.basename(file_path)}: python-docx未安装", level="error")
+        return ""
+    
+    try:
+        doc = Document(file_path)
+        # 提取所有段落文本
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:
+                paragraphs.append(text)
+        
+        # 也提取表格中的文本
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        paragraphs.append(text)
+        
+        content = '\n'.join(paragraphs)
+        return content
+    except Exception as e:
+        log_message(f"读取docx文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
+        return ""
+
+def read_docx_from_bytes(file_bytes, filename):
+    """从字节流读取docx文件内容"""
+    if not DOCX_AVAILABLE:
+        log_message(f"无法读取 {filename}: python-docx未安装", level="error")
+        return ""
+    
+    try:
+        import io
+        doc = Document(io.BytesIO(file_bytes))
+        # 提取所有段落文本
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:
+                paragraphs.append(text)
+        
+        # 也提取表格中的文本
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        paragraphs.append(text)
+        
+        content = '\n'.join(paragraphs)
+        return content
+    except Exception as e:
+        log_message(f"读取docx文件 {filename} 失败: {str(e)}", level="error")
+        return ""
+
+def read_pdf_file(file_path):
+    """读取PDF文件内容"""
+    if PDF_LIBRARY is None:
+        log_message(f"无法读取 {os.path.basename(file_path)}: PDF库未安装", level="error")
+        return ""
+    
+    try:
+        if PDF_LIBRARY == "pdfplumber":
+            import pdfplumber
+            text_content = []
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+        
+        elif PDF_LIBRARY == "PyPDF2":
+            import PyPDF2
+            text_content = []
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+    
+    except Exception as e:
+        log_message(f"读取PDF文件 {os.path.basename(file_path)} 失败: {str(e)}", level="error")
+        return ""
+
+def read_pdf_from_bytes(file_bytes, filename):
+    """从字节流读取PDF文件内容"""
+    if PDF_LIBRARY is None:
+        log_message(f"无法读取 {filename}: PDF库未安装", level="error")
+        return ""
+    
+    try:
+        import io
+        
+        if PDF_LIBRARY == "pdfplumber":
+            import pdfplumber
+            text_content = []
+            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content.append(page_text)
+            return '\n'.join(text_content)
+        
+        elif PDF_LIBRARY == "PyPDF2":
+            import PyPDF2
+            text_content = []
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_content.append(page_text)
+            return '\n'.join(text_content)
+    
+    except Exception as e:
+        log_message(f"读取PDF文件 {filename} 失败: {str(e)}", level="error")
+        return ""
+
+def get_supported_extensions():
+    """获取支持的文件扩展名列表"""
+    extensions = ['.txt']
+    if DOCX_AVAILABLE:
+        extensions.extend(['.docx', '.doc'])
+    if PDF_LIBRARY is not None:
+        extensions.append('.pdf')
+    return extensions
+
+def is_supported_file(filename):
+    """检查文件是否为支持的格式"""
+    ext = os.path.splitext(filename.lower())[1]
+    return ext in get_supported_extensions()
+
+def read_any_document(file_path):
+    """根据文件类型读取文档内容"""
+    ext = os.path.splitext(file_path.lower())[1]
+    
+    if ext == '.txt':
+        return read_file_with_encoding(file_path)
+    elif ext in ['.docx', '.doc']:
+        return read_docx_file(file_path)
+    elif ext == '.pdf':
+        return read_pdf_file(file_path)
+    else:
+        log_message(f"不支持的文件格式: {ext}", level="warning")
+        return ""
+
 def render_data_loader():
     """渲染数据加载模块"""
     st.header("数据加载")
     
-    # 功能介绍
-    with st.expander("📖 功能介绍", expanded=False):
+    # 功能介绍与操作手册
+    with st.expander("📖 功能介绍与操作手册", expanded=False):
         st.markdown("""
-        **数据加载模块** 用于导入待分析的政策文本文件。
+        ## 📂 数据加载模块
         
-        **支持的数据来源：**
-        - 📤 **上传文件**：支持上传TXT文本文件或ZIP压缩包（包含多个TXT文件）
-        - 📋 **示例数据**：系统预置的3份政策文件示例，用于快速体验系统功能
-        - 🎲 **随机数据**：自动生成随机测试数据，用于系统测试（支持批量生成2000-5000个）
+        **功能概述**：导入待分析的政策文本文件，是LDA主题模型分析的第一步。
         
-        **大规模文件处理：**
-        - ✅ 支持处理最多10000个文件
-        - ✅ 采用批量处理和内存优化
-        - ⚠️ 超过1000个文件时建议关注内存使用
+        ---
         
-        **使用建议：**
-        - 建议每个文件包含一份完整的政策文档
-        - 文件编码支持UTF-8、GBK、GB2312等常见格式
-        - 大量文件时建议使用ZIP压缩包上传
+        ### 🎯 使用场景
+        
+        | 场景 | 推荐方式 | 说明 |
+        |------|----------|------|
+        | 初次体验系统 | 示例数据 | 快速了解系统功能，无需准备数据 |
+        | 正式研究分析 | 上传文件 | 上传自己的政策文本进行分析 |
+        | 系统性能测试 | 随机数据 | 测试系统处理大规模数据的能力 |
+        | 学术论文研究 | 上传文件 | 上传研究对象的政策文本集 |
+        
+        ---
+        
+        ### 📋 操作步骤
+        
+        **方式一：上传文件**
+        1. 选择"上传文件"选项
+        2. 点击上传区域，选择TXT文件或ZIP压缩包
+        3. 点击"开始加载"按钮
+        4. 等待文件处理完成
+        
+        **方式二：使用示例数据**
+        1. 选择"使用示例数据"选项
+        2. 点击"加载示例数据"按钮
+        3. 系统将加载3份预置的政策文件
+        
+        **方式三：生成随机数据**
+        1. 选择"生成随机数据"选项
+        2. 设置要生成的文件数量（或使用快捷选项）
+        3. 点击"生成随机数据"按钮
+        
+        ---
+        
+        ### 📁 支持的文件格式
+        
+        | 格式 | 说明 | 编码支持 |
+        |------|------|----------|
+        | .txt | 纯文本文件 | UTF-8, GBK, GB2312, GB18030, Big5 |
+        | .docx | Word文档（推荐） | 自动解析 |
+        | .doc | 旧版Word文档 | 自动解析 |
+        | .pdf | PDF文档 | 自动提取文本 |
+        | .zip | 压缩包（内含多个文档） | 自动检测 |
+        
+        **注意**：
+        - DOC/DOCX支持需要安装python-docx库：`pip install python-docx`
+        - PDF支持需要安装pdfplumber或PyPDF2库：`pip install pdfplumber` 或 `pip install PyPDF2`
+        - ZIP压缩包可包含TXT、DOC、DOCX、PDF混合文件
+        - 扫描版PDF（图片PDF）无法提取文本，建议使用文字版PDF
+        
+        ---
+        
+        ### ⚙️ 参数说明
+        
+        | 参数 | 范围 | 默认值 | 说明 |
+        |------|------|--------|------|
+        | 最大文件数 | 1-10000 | 10000 | 系统支持的最大文件数量 |
+        | 批量处理大小 | - | 100 | 每批处理的文件数量 |
+        | 内存警告阈值 | - | 1000 | 超过此数量显示内存警告 |
+        
+        ---
+        
+        ### 💡 使用建议
+        
+        **数据准备建议：**
+        - 每个TXT文件包含一份完整的政策文档
+        - 文件名建议包含政策名称或编号，便于后续识别
+        - 确保文本内容为纯文本格式，避免包含特殊格式
+        
+        **大规模数据处理：**
+        - 超过100个文件建议使用ZIP压缩包上传
+        - 超过1000个文件时注意内存使用
+        - 处理完成后可点击"清空数据"释放内存
+        
+        **学术研究建议：**
+        - 建议收集同一领域、同一时期的政策文本
+        - 文本数量建议在50-500份之间
+        - 每份文本长度建议在500-5000字之间
+        
+        ---
+        
+        ### ❓ 常见问题
+        
+        **Q: 文件上传失败怎么办？**
+        A: 检查文件编码是否为支持的格式，尝试将文件转换为UTF-8编码。
+        
+        **Q: 系统显示内存警告怎么办？**
+        A: 可以减少加载的文件数量，或在分析完成后点击"清空数据"释放内存。
+        
+        **Q: 如何判断数据加载是否成功？**
+        A: 加载成功后会显示文件列表和统计信息，可以预览文件内容确认。
         """)
     
     # 数据加载选项
@@ -223,14 +477,24 @@ def render_data_loader():
     if data_source == "上传文件":
         st.subheader("上传政策文件")
         
-        # 大文件上传提示
-        st.info("💡 提示：大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+        # 构建支持的文件类型列表和提示信息
+        supported_formats = ["TXT", "ZIP"]
         
+        if DOCX_AVAILABLE:
+            supported_formats.extend(["DOC", "DOCX"])
+        
+        if PDF_LIBRARY is not None:
+            supported_formats.append("PDF")
+        
+        format_str = "、".join(supported_formats)
+        st.info(f"💡 提示：支持{format_str}文件，大量文件建议打包成ZIP压缩包上传，支持最多10000个文件")
+        
+        # 不限制文件类型，让用户上传任何文件，在处理时检查
         uploaded_files = st.file_uploader(
-            "上传TXT文本文件或ZIP压缩包", 
-            type=["txt", "zip"], 
+            "上传文本文件或ZIP压缩包", 
             accept_multiple_files=True,
-            key="data_files_uploader"
+            key="data_files_uploader",
+            help="支持TXT、DOC、DOCX、PDF、ZIP格式"
         )
         
         if uploaded_files and st.button("开始加载", key="load_uploaded_files"):
@@ -244,6 +508,7 @@ def render_data_loader():
                 status_text = st.empty()
                 
                 processed_count = 0
+                skipped_count = 0
                 
                 for i, uploaded_file in enumerate(uploaded_files):
                     status_text.text(f"处理文件 {i+1}/{total_files}: {uploaded_file.name}")
@@ -256,40 +521,79 @@ def render_data_loader():
                                 f.write(uploaded_file.getbuffer())
                             
                             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                                # 获取ZIP中的文件列表
-                                txt_files = [f for f in zip_ref.namelist() if f.endswith('.txt')]
-                                total_txt = len(txt_files)
+                                # 获取ZIP中支持的文件列表
+                                supported_files = [f for f in zip_ref.namelist() if is_supported_file(f)]
+                                total_supported = len(supported_files)
                                 
                                 zip_ref.extractall(temp_dir)
                                 
                                 # 批量处理ZIP中的文件
-                                for j, file in enumerate(txt_files):
+                                for j, file in enumerate(supported_files):
                                     if j % 50 == 0:
-                                        progress = (i + j/total_txt) / total_files
+                                        progress = (i + j/max(total_supported, 1)) / total_files
                                         progress_bar.progress(min(progress, 1.0))
-                                        status_text.text(f"处理ZIP文件 {i+1}/{total_files}，内部文件 {j+1}/{total_txt}")
+                                        status_text.text(f"处理ZIP文件 {i+1}/{total_files}，内部文件 {j+1}/{total_supported}")
                                     
                                     file_path = os.path.join(temp_dir, file)
                                     if os.path.isfile(file_path):
-                                        content = read_file_with_encoding(file_path)
-                                        if content:
+                                        content = read_any_document(file_path)
+                                        if content and content.strip():
                                             filename = os.path.basename(file)
                                             st.session_state.file_contents[filename] = content
                                             st.session_state.file_names.append(filename)
                                             st.session_state.raw_texts.append(content)
                                             processed_count += 1
+                                        else:
+                                            skipped_count += 1
                                     
                                     # 定期垃圾回收
                                     if j > 0 and j % 500 == 0:
                                         gc.collect()
-                                        
-                    elif uploaded_file.name.endswith('.txt'):
+                    
+                    elif uploaded_file.name.lower().endswith('.txt'):
                         # 处理单个TXT文件
                         content = uploaded_file.read().decode('utf-8', errors='replace')
-                        st.session_state.file_contents[uploaded_file.name] = content
-                        st.session_state.file_names.append(uploaded_file.name)
-                        st.session_state.raw_texts.append(content)
-                        processed_count += 1
+                        if content and content.strip():
+                            st.session_state.file_contents[uploaded_file.name] = content
+                            st.session_state.file_names.append(uploaded_file.name)
+                            st.session_state.raw_texts.append(content)
+                            processed_count += 1
+                        else:
+                            skipped_count += 1
+                    
+                    elif uploaded_file.name.lower().endswith(('.docx', '.doc')):
+                        # 处理DOC/DOCX文件
+                        if DOCX_AVAILABLE:
+                            file_bytes = uploaded_file.read()
+                            content = read_docx_from_bytes(file_bytes, uploaded_file.name)
+                            if content and content.strip():
+                                st.session_state.file_contents[uploaded_file.name] = content
+                                st.session_state.file_names.append(uploaded_file.name)
+                                st.session_state.raw_texts.append(content)
+                                processed_count += 1
+                            else:
+                                skipped_count += 1
+                                log_message(f"文件 {uploaded_file.name} 内容为空，已跳过", level="warning")
+                        else:
+                            skipped_count += 1
+                            log_message(f"无法处理 {uploaded_file.name}: python-docx未安装", level="warning")
+                    
+                    elif uploaded_file.name.lower().endswith('.pdf'):
+                        # 处理PDF文件
+                        if PDF_LIBRARY is not None:
+                            file_bytes = uploaded_file.read()
+                            content = read_pdf_from_bytes(file_bytes, uploaded_file.name)
+                            if content and content.strip():
+                                st.session_state.file_contents[uploaded_file.name] = content
+                                st.session_state.file_names.append(uploaded_file.name)
+                                st.session_state.raw_texts.append(content)
+                                processed_count += 1
+                            else:
+                                skipped_count += 1
+                                log_message(f"文件 {uploaded_file.name} 内容为空或无法提取文本，已跳过", level="warning")
+                        else:
+                            skipped_count += 1
+                            log_message(f"无法处理 {uploaded_file.name}: PDF库未安装", level="warning")
                     
                     progress_bar.progress((i + 1) / total_files)
                 
@@ -299,7 +603,10 @@ def render_data_loader():
                 log_message(f"已加载 {processed_count} 个文件", level="success")
                 
                 # 显示加载结果
-                st.success(f"成功加载 {processed_count} 个文件")
+                if skipped_count > 0:
+                    st.success(f"成功加载 {processed_count} 个文件，跳过 {skipped_count} 个空文件或不支持的文件")
+                else:
+                    st.success(f"成功加载 {processed_count} 个文件")
                 
                 # 内存警告
                 if processed_count > MEMORY_WARNING_THRESHOLD:

@@ -26,14 +26,47 @@ class LDAAnalyzer:
         self.doc_topic_dist = None
     
     def train_model(self, num_topics=5, iterations=50, passes=10, chunksize=None, 
-                    alpha='auto', eta='auto', eval_every=10, callbacks=None):
-        """训练LDA模型"""
+                    alpha='auto', eta='auto', eval_every=10, random_state=42,
+                    minimum_probability=0.01, decay=0.5, offset=1.0, 
+                    gamma_threshold=0.001, callbacks=None):
+        """
+        训练LDA模型
+        
+        参数说明：
+        ---------
+        num_topics : int
+            主题数量
+        iterations : int
+            Gibbs采样迭代次数
+        passes : int
+            语料库遍历次数
+        chunksize : int
+            在线学习批量大小
+        alpha : str or list
+            文档-主题分布的Dirichlet先验 ('auto', 'symmetric', 'asymmetric')
+        eta : str or list
+            主题-词语分布的Dirichlet先验 ('auto', 'symmetric')
+        eval_every : int
+            困惑度评估间隔
+        random_state : int
+            随机种子，确保结果可重现
+        minimum_probability : float
+            主题概率阈值
+        decay : float
+            学习率衰减参数 (0.5-1.0)
+        offset : float
+            学习率偏移参数
+        gamma_threshold : float
+            E步收敛阈值
+        callbacks : dict
+            回调函数字典
+        """
         # 确定合适的chunksize
         if chunksize is None:
             chunksize = max(len(self.corpus) // 10, 100)
         
         # 设置随机种子以确保结果可重现
-        np.random.seed(42)
+        np.random.seed(random_state)
         
         # 进度条和状态文本
         progress_bar = None
@@ -53,6 +86,11 @@ class LDAAnalyzer:
             alpha=alpha,
             eta=eta,
             eval_every=eval_every,
+            random_state=random_state,
+            minimum_probability=minimum_probability,
+            decay=decay,
+            offset=offset,
+            gamma_threshold=gamma_threshold,
             callbacks=None  # 不使用Gensim内部回调
         )
         
@@ -105,10 +143,37 @@ class LDAAnalyzer:
         
         return np.array(doc_topics)
     
-    def find_optimal_topics(self, start=2, end=15, step=1, callbacks=None):
+    def find_optimal_topics(self, start=2, end=15, step=1, random_state=42, callbacks=None):
         """
         寻找最优主题数量
-        注意：对于u_mass一致性测量，值通常为负，越接近0越好
+        
+        算法说明：
+        ---------
+        通过遍历不同的主题数量，训练多个LDA模型，并计算每个模型的连贯性分数和困惑度，
+        最终选择连贯性最优的主题数量。
+        
+        注意事项：
+        ---------
+        1. 对于u_mass一致性测量，值通常为负，越接近0越好
+        2. 为确保结果可重现，每次训练都使用固定的随机种子
+        3. 搜索过程使用较少的迭代次数(iterations=50, passes=5)以加快速度
+        
+        参数：
+        -----
+        start : int
+            起始主题数量
+        end : int
+            结束主题数量
+        step : int
+            步长
+        random_state : int
+            随机种子，确保结果可重现
+        callbacks : dict
+            包含进度条和状态文本的回调字典
+            
+        返回：
+        -----
+        dict : 包含最优主题数、连贯性值列表、困惑度值列表、主题范围和模型列表
         """
         coherence_values = []
         perplexity_values = []
@@ -134,16 +199,20 @@ class LDAAnalyzer:
             if status_text:
                 status_text.text(f"训练模型 {num_topics} 主题 ({idx+1}/{total_iterations})")
             
-            # 训练模型
+            # 设置随机种子以确保结果可重现
+            np.random.seed(random_state)
+            
+            # 训练模型（搜索时使用较少的迭代以加快速度）
             model = LdaModel(
                 corpus=self.corpus,
                 id2word=self.dictionary,
                 num_topics=num_topics,
-                iterations=50,  # 使用较少的迭代次数加快搜索
-                passes=5,      # 使用较少的passes加快搜索
+                iterations=50,  # 搜索时使用较少的迭代次数
+                passes=5,       # 搜索时使用较少的passes
                 alpha='auto',
                 eta='auto',
-                callbacks=None  # 不使用回调函数
+                random_state=random_state,
+                callbacks=None
             )
             
             # 添加到模型列表
@@ -166,7 +235,7 @@ class LDAAnalyzer:
                     topics=topics,
                     corpus=self.corpus,
                     dictionary=self.dictionary, 
-                    coherence='u_mass'  # 使用与_calculate_coherence相同的方法
+                    coherence='u_mass'
                 )
                 coherence = coherence_model.get_coherence()
                 coherence_values.append(coherence)
@@ -177,8 +246,7 @@ class LDAAnalyzer:
             # 记录日志
             log_message(f"主题数量={num_topics}, 连贯性={coherence_values[-1]:.4f}, 困惑度={perplexity_values[-1]:.4f}")
         
-        # 找到最优主题数量 (对于u_mass，寻找最大值而非最小值，因为越接近0越好)
-        # 注意：如果coherence_values全为负值，则选择绝对值最小的作为最优
+        # 找到最优主题数量 (对于u_mass，越接近0越好)
         if all(cv < 0 for cv in coherence_values if cv != 0):
             # 所有值都是负值，找绝对值最小的
             optimal_idx = np.argmin([abs(cv) for cv in coherence_values if cv != 0] or [0])
@@ -250,9 +318,10 @@ def plot_coherence_perplexity(results):
     - 对于u_mass连贯性测量，值通常为负，越接近0越好
     - 困惑度(log值)通常为负，值越大(越接近0)表示模型越好
     """
+    from utils.font_config import setup_matplotlib_chinese, get_label, L
+    
     # 设置中文字体
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS']  # 优先使用的中文字体
-    plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
+    use_chinese = setup_matplotlib_chinese()
     
     fig = plt.figure(figsize=(12, 5))
     
@@ -260,16 +329,23 @@ def plot_coherence_perplexity(results):
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     
+    # 获取标签
+    title1 = get_label('主题连贯性评分 (u_mass)', 'Topic Coherence (u_mass)')
+    xlabel = get_label('主题数量', 'Number of Topics')
+    ylabel1 = get_label('连贯性分数 (越接近0越好)', 'Coherence Score (closer to 0 is better)')
+    title2 = get_label('模型困惑度 (log值)', 'Model Perplexity (log)')
+    ylabel2 = get_label('困惑度 (log值，越接近0越好)', 'Perplexity (log, closer to 0 is better)')
+    optimal_label = get_label('最优', 'Optimal')
+    
     # 绘制连贯性得分
     ax1.plot(results['topics_range'], results['coherence_values'], marker='o')
-    ax1.set_title('主题连贯性评分 (u_mass)')
-    ax1.set_xlabel('主题数量')
-    ax1.set_ylabel('连贯性分数 (越接近0越好)')
+    ax1.set_title(title1)
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(ylabel1)
     ax1.grid(True, alpha=0.3)
     
     # 在最优点添加标记
     if all(cv < 0 for cv in results['coherence_values'] if cv != 0):
-        # 所有值都是负值，找绝对值最小的
         abs_values = [abs(cv) for cv in results['coherence_values']]
         optimal_idx = np.argmin(abs_values)
     else:
@@ -278,24 +354,24 @@ def plot_coherence_perplexity(results):
     optimal_topics = results['topics_range'][optimal_idx]
     optimal_coherence = results['coherence_values'][optimal_idx]
     ax1.scatter(optimal_topics, optimal_coherence, color='red', s=100, zorder=5)
-    ax1.annotate(f'最优: {optimal_topics}',
+    ax1.annotate(f'{optimal_label}: {optimal_topics}',
                 xy=(optimal_topics, optimal_coherence),
                 xytext=(optimal_topics+1, optimal_coherence),
                 arrowprops=dict(arrowstyle='->'))
     
     # 绘制困惑度
     ax2.plot(results['topics_range'], results['perplexity_values'], marker='o', color='orange')
-    ax2.set_title('模型困惑度 (log值)')
-    ax2.set_xlabel('主题数量')
-    ax2.set_ylabel('困惑度 (log值，越接近0越好)')
+    ax2.set_title(title2)
+    ax2.set_xlabel(xlabel)
+    ax2.set_ylabel(ylabel2)
     ax2.grid(True, alpha=0.3)
     
-    # 在困惑度最优点添加标记 (对于log困惑度，值越大越好，因为通常为负值)
+    # 在困惑度最优点添加标记
     perp_idx = np.argmax(results['perplexity_values'])
     perp_topics = results['topics_range'][perp_idx]
     perp_value = results['perplexity_values'][perp_idx]
     ax2.scatter(perp_topics, perp_value, color='red', s=100, zorder=5)
-    ax2.annotate(f'最优: {perp_topics}',
+    ax2.annotate(f'{optimal_label}: {perp_topics}',
                 xy=(perp_topics, perp_value),
                 xytext=(perp_topics+1, perp_value),
                 arrowprops=dict(arrowstyle='->'))
@@ -308,33 +384,118 @@ def render_model_trainer():
     """渲染模型训练模块"""
     st.header("LDA主题模型训练")
     
-    # 功能介绍
-    with st.expander("📖 功能介绍", expanded=False):
+    # 功能介绍和操作手册
+    with st.expander("📖 功能介绍与操作手册", expanded=False):
         st.markdown("""
-        **模型训练模块** 使用LDA（潜在狄利克雷分配）算法对文本进行主题建模。
+        ## LDA主题模型训练模块
         
-        **主要功能：**
-        - 🎯 **模型训练**：根据设定参数训练LDA主题模型
-        - 🔍 **最优主题数搜索**：自动寻找最佳主题数量
-        - 💾 **模型保存/加载**：保存训练好的模型，支持后续加载使用
+        本模块使用**LDA（Latent Dirichlet Allocation，潜在狄利克雷分配）**算法对文本进行主题建模，
+        是文本挖掘和自然语言处理领域最经典的主题模型之一。
         
-        **核心参数说明：**
-        - **主题数量**：模型要识别的主题个数（建议3-15个）
-        - **迭代次数**：模型训练的迭代轮数（越多越精确，但耗时更长）
-        - **passes**：整个语料库的遍历次数
+        ---
         
-        **高级参数：**
-        - **Alpha**：文档-主题分布的先验参数（auto自动优化）
-        - **Eta**：主题-词语分布的先验参数（auto自动优化）
-        - **Chunksize**：每次训练的文档批量大小
+        ### 📚 算法原理
         
-        **评估指标：**
-        - **连贯性分数(Coherence)**：衡量主题内词语的语义一致性，使用u_mass方法，值越接近0越好
-        - **困惑度(Perplexity)**：衡量模型对新文档的预测能力，log值越接近0越好
+        LDA是一种**生成式概率模型**，假设文档由多个主题混合而成，每个主题由多个词语组成：
         
-        **使用建议：**
-        1. 首次使用建议先用"寻找最优主题数量"功能
-        2. 找到最优主题数后，可直接使用最优模型或手动调整参数重新训练
+        1. **文档-主题分布 (θ)**：每个文档包含多个主题的概率分布
+        2. **主题-词语分布 (φ)**：每个主题包含多个词语的概率分布
+        3. **生成过程**：
+           - 对每个文档，从Dirichlet分布采样主题分布 θ ~ Dir(α)
+           - 对每个主题，从Dirichlet分布采样词语分布 φ ~ Dir(β)
+           - 对文档中的每个词，先采样主题 z ~ Multinomial(θ)，再采样词语 w ~ Multinomial(φ_z)
+        
+        ---
+        
+        ### 🎯 主要功能
+        
+        | 功能 | 说明 |
+        |------|------|
+        | **模型训练** | 根据设定参数训练LDA主题模型 |
+        | **最优主题数搜索** | 自动遍历不同主题数，找到最佳值 |
+        | **模型保存/加载** | 保存训练好的模型，支持后续复用 |
+        
+        ---
+        
+        ### ⚙️ 参数详解
+        
+        #### 基础参数
+        
+        | 参数 | 说明 | 建议值 | 学术研究建议 |
+        |------|------|--------|--------------|
+        | **主题数量 (K)** | 模型要识别的主题个数 | 3-15 | 先用自动搜索确定，或根据领域知识设定 |
+        | **迭代次数 (iterations)** | Gibbs采样的迭代轮数 | 50-200 | 学术研究建议≥100，确保收敛 |
+        | **passes** | 整个语料库的遍历次数 | 5-20 | 学术研究建议≥10，小语料库可增加 |
+        
+        #### 高级参数
+        
+        | 参数 | 说明 | 选项 | 学术研究建议 |
+        |------|------|------|--------------|
+        | **Alpha (α)** | 文档-主题分布的Dirichlet先验 | auto/symmetric/asymmetric | **auto**：自动学习最优值（推荐）<br>**symmetric**：对称先验，所有主题权重相同<br>**asymmetric**：非对称先验，允许某些主题更常见 |
+        | **Eta (β)** | 主题-词语分布的Dirichlet先验 | auto/symmetric | **auto**：自动学习最优值（推荐）<br>**symmetric**：对称先验 |
+        | **Chunksize** | 在线学习的批量大小 | 100-5000 | 大语料库用2000，小语料库可用全部文档数 |
+        | **随机种子** | 确保结果可重现 | 固定值 | 学术研究**必须**固定，本系统默认42 |
+        | **eval_every** | 每隔多少次迭代评估困惑度 | 10-50 | 设为10可监控收敛，设为None加快训练 |
+        | **minimum_probability** | 主题概率阈值 | 0.0-0.1 | 0.0保留所有主题，0.01过滤噪声 |
+        
+        ---
+        
+        ### 📊 评估指标
+        
+        | 指标 | 说明 | 解读 |
+        |------|------|------|
+        | **连贯性 (Coherence)** | 衡量主题内词语的语义一致性 | u_mass方法：值为负，**越接近0越好** |
+        | **困惑度 (Perplexity)** | 衡量模型对新文档的预测能力 | log值为负，**越接近0越好** |
+        
+        **注意**：连贯性和困惑度可能指向不同的最优主题数，建议：
+        - 优先参考**连贯性分数**（更符合人类对主题的理解）
+        - 结合**领域知识**和**主题可解释性**综合判断
+        
+        ---
+        
+        ### 📋 操作流程
+        
+        #### 方式一：自动寻找最优主题数（推荐新手）
+        
+        1. 展开"寻找最优主题数量"面板
+        2. 设置搜索范围（建议：起始2，结束15，步长1）
+        3. 点击"寻找最优主题数量"按钮
+        4. 等待搜索完成，查看连贯性和困惑度曲线
+        5. 点击"直接使用最优模型"应用结果
+        
+        #### 方式二：手动设置参数训练
+        
+        1. 在"模型参数配置"中设置主题数量、迭代次数、passes
+        2. 如需调整高级参数，勾选"显示高级选项"
+        3. 点击"开始训练LDA模型"按钮
+        4. 等待训练完成，查看结果
+        
+        #### 方式三：加载已有模型
+        
+        1. 展开"加载已有模型"面板
+        2. 选择之前保存的模型文件
+        3. 点击"加载模型"按钮
+        
+        ---
+        
+        ### 💡 学术研究建议
+        
+        1. **可重复性**：本系统已固定随机种子(42)，确保相同数据得到相同结果
+        2. **参数报告**：论文中应报告主题数、迭代次数、passes、alpha、eta等参数
+        3. **模型选择**：建议尝试多个主题数，结合连贯性分数和主题可解释性选择
+        4. **收敛检验**：确保迭代次数足够，困惑度趋于稳定
+        5. **敏感性分析**：可尝试不同参数组合，检验结果稳健性
+        
+        ---
+        
+        ### ⚠️ 常见问题
+        
+        | 问题 | 可能原因 | 解决方案 |
+        |------|----------|----------|
+        | 主题词重复度高 | 主题数过多或语料库太小 | 减少主题数或增加语料 |
+        | 主题不可解释 | 预处理不充分或参数不当 | 优化停用词、调整参数 |
+        | 训练时间过长 | 迭代次数过多或语料库太大 | 减少iterations/passes或增加chunksize |
+        | 结果不稳定 | 随机种子未固定 | 本系统已固定，如仍不稳定请检查数据 |
         """)
     
     # 检查是否完成了预处理
@@ -342,97 +503,231 @@ def render_model_trainer():
         st.warning('请先在"文本预处理"选项卡中完成文本预处理')
         return
     
-    # 合并"模型参数配置"和"高级模型参数"为一个配置区域
-    with st.expander("模型参数配置", expanded=True):
+    # 显示语料库基本信息
+    st.info(f"📊 当前语料库：{len(st.session_state.texts)} 个文档，{len(st.session_state.dictionary)} 个词汇")
+    
+    # 模型参数配置
+    with st.expander("⚙️ 模型参数配置", expanded=True):
+        st.markdown("#### 基础参数")
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.session_state.num_topics = st.slider(
-                "主题数量", 
+                "主题数量 (K)", 
                 min_value=2, 
-                max_value=20, 
+                max_value=30, 
                 value=st.session_state.num_topics,
-                help="LDA模型的主题数量",
+                help="LDA模型的主题数量。建议先用自动搜索确定最优值，或根据领域知识设定。",
                 key="main_num_topics_slider"
             )
         
         with col2:
             st.session_state.iterations = st.number_input(
-                "迭代次数", 
+                "迭代次数 (iterations)", 
                 min_value=10, 
-                max_value=200, 
+                max_value=500, 
                 value=st.session_state.iterations,
                 step=10,
-                help="LDA模型训练的迭代次数",
+                help="Gibbs采样的迭代轮数。学术研究建议≥100以确保收敛。",
                 key="main_iterations_input"
             )
         
         with col3:
             st.session_state.passes = st.number_input(
-                "passes", 
+                "遍历次数 (passes)", 
                 min_value=1, 
-                max_value=20, 
+                max_value=50, 
                 value=st.session_state.passes,
                 step=1,
-                help="LDA训练中的passes数量",
+                help="整个语料库的遍历次数。学术研究建议≥10，小语料库可适当增加。",
                 key="main_passes_input"
             )
         
         # 高级选项切换
-        show_advanced = st.checkbox("显示高级选项", value=False, key="show_advanced_options_checkbox")
+        show_advanced = st.checkbox("🔧 显示高级选项（学术研究推荐）", value=False, key="show_advanced_options_checkbox")
         
         if show_advanced:
             st.markdown("---")
-            st.subheader("高级参数")
-            advanced_col1, advanced_col2, advanced_col3 = st.columns(3)
+            st.markdown("#### 高级参数")
             
-            with advanced_col1:
-                alpha = st.radio(
-                    "Alpha参数", 
+            # 第一行高级参数
+            adv_col1, adv_col2, adv_col3 = st.columns(3)
+            
+            with adv_col1:
+                alpha = st.selectbox(
+                    "Alpha (α) 参数", 
                     ["auto", "symmetric", "asymmetric"],
                     index=0,
-                    help="主题-文档分布的先验参数",
-                    key="model_alpha_radio"
+                    help="""文档-主题分布的Dirichlet先验参数：
+                    - auto: 自动学习最优值（推荐）
+                    - symmetric: 对称先验，所有主题权重相同
+                    - asymmetric: 非对称先验，允许某些主题更常见""",
+                    key="model_alpha_select"
                 )
             
-            with advanced_col2:
-                eta = st.radio(
-                    "Eta参数", 
+            with adv_col2:
+                eta = st.selectbox(
+                    "Eta (β) 参数", 
                     ["auto", "symmetric"],
                     index=0,
-                    help="词-主题分布的先验参数",
-                    key="model_eta_radio"
+                    help="""主题-词语分布的Dirichlet先验参数：
+                    - auto: 自动学习最优值（推荐）
+                    - symmetric: 对称先验""",
+                    key="model_eta_select"
                 )
             
-            with advanced_col3:
+            with adv_col3:
+                # 根据语料库大小建议chunksize
+                corpus_len = len(st.session_state.corpus) if st.session_state.corpus else 10
+                default_chunksize = max(1, min(2000, corpus_len))
                 chunksize = st.number_input(
-                    "Chunksize", 
-                    min_value=100, 
-                    max_value=5000, 
-                    value=2000, 
-                    step=100,
-                    help="每次训练的文档批量大小",
+                    "批量大小 (Chunksize)", 
+                    min_value=1, 
+                    max_value=10000, 
+                    value=default_chunksize, 
+                    step=10,
+                    help="在线学习的批量大小。大语料库用2000，小语料库可用全部文档数。",
                     key="model_chunksize_input"
                 )
+            
+            # 第二行高级参数
+            adv_col4, adv_col5, adv_col6 = st.columns(3)
+            
+            with adv_col4:
+                eval_every = st.number_input(
+                    "评估间隔 (eval_every)",
+                    min_value=1,
+                    max_value=100,
+                    value=10,
+                    step=5,
+                    help="每隔多少次迭代评估困惑度。设为10可监控收敛，设为较大值可加快训练。",
+                    key="model_eval_every_input"
+                )
+            
+            with adv_col5:
+                minimum_probability = st.number_input(
+                    "最小概率阈值",
+                    min_value=0.0,
+                    max_value=0.1,
+                    value=0.01,
+                    step=0.01,
+                    format="%.2f",
+                    help="主题概率低于此阈值的将被过滤。0.0保留所有，0.01过滤噪声。",
+                    key="model_min_prob_input"
+                )
+            
+            with adv_col6:
+                random_state = st.number_input(
+                    "随机种子 (random_state)",
+                    min_value=0,
+                    max_value=9999,
+                    value=42,
+                    step=1,
+                    help="固定随机种子确保结果可重现。学术研究必须固定此值。",
+                    key="model_random_state_input"
+                )
+            
+            # 第三行高级参数
+            adv_col7, adv_col8, adv_col9 = st.columns(3)
+            
+            with adv_col7:
+                decay = st.number_input(
+                    "学习率衰减 (decay)",
+                    min_value=0.5,
+                    max_value=1.0,
+                    value=0.5,
+                    step=0.1,
+                    format="%.1f",
+                    help="在线学习的学习率衰减参数。控制旧信息的遗忘速度。",
+                    key="model_decay_input"
+                )
+            
+            with adv_col8:
+                offset = st.number_input(
+                    "学习率偏移 (offset)",
+                    min_value=1.0,
+                    max_value=100.0,
+                    value=1.0,
+                    step=1.0,
+                    format="%.1f",
+                    help="在线学习的偏移参数。较大值使早期迭代学习率更低。",
+                    key="model_offset_input"
+                )
+            
+            with adv_col9:
+                gamma_threshold = st.number_input(
+                    "收敛阈值 (gamma_threshold)",
+                    min_value=0.0001,
+                    max_value=0.01,
+                    value=0.001,
+                    step=0.0001,
+                    format="%.4f",
+                    help="E步收敛阈值。较小值更精确但更慢。",
+                    key="model_gamma_threshold_input"
+                )
+            
+            # 显示当前参数摘要
+            st.markdown("---")
+            st.markdown("#### 📋 当前参数摘要（可用于论文报告）")
+            params_summary = f"""
+            ```
+            LDA模型参数配置：
+            - 主题数量 (K): {st.session_state.num_topics}
+            - 迭代次数 (iterations): {st.session_state.iterations}
+            - 遍历次数 (passes): {st.session_state.passes}
+            - Alpha: {alpha}
+            - Eta: {eta}
+            - Chunksize: {chunksize}
+            - 随机种子: {random_state}
+            - 评估间隔: {eval_every}
+            - 最小概率阈值: {minimum_probability}
+            - 学习率衰减: {decay}
+            - 学习率偏移: {offset}
+            - 收敛阈值: {gamma_threshold}
+            ```
+            """
+            st.markdown(params_summary)
         else:
+            # 使用默认高级参数
             alpha = "auto"
             eta = "auto"
             chunksize = None
+            eval_every = 10
+            minimum_probability = 0.01
+            random_state = 42
+            decay = 0.5
+            offset = 1.0
+            gamma_threshold = 0.001
     
     # 自动寻找最优主题数量
-    with st.expander("寻找最优主题数量", expanded=False):
-        col1, col2, col3 = st.columns(3)
+    with st.expander("🔍 寻找最优主题数量", expanded=False):
+        st.markdown("""
+        💡 **使用说明**：自动遍历不同主题数，计算连贯性分数，找到最优值。
+        搜索过程使用较少的迭代次数以加快速度，找到最优值后可直接使用或重新训练。
+        """)
+        
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             start_topics = st.number_input("起始主题数", min_value=2, max_value=15, value=2, key="start_topics_input")
         
         with col2:
-            end_topics = st.number_input("结束主题数", min_value=3, max_value=20, value=15, key="end_topics_input")
+            end_topics = st.number_input("结束主题数", min_value=3, max_value=30, value=15, key="end_topics_input")
         
         with col3:
             step = st.number_input("步长", min_value=1, max_value=5, value=1, key="topics_step_input")
         
-        if st.button("寻找最优主题数量", key="find_optimal_topics"):
+        with col4:
+            search_random_state = st.number_input(
+                "随机种子", 
+                min_value=0, 
+                max_value=9999, 
+                value=42, 
+                key="search_random_state_input",
+                help="固定随机种子确保搜索结果可重现"
+            )
+        
+        if st.button("🔍 寻找最优主题数量", key="find_optimal_topics"):
             # 检查参数有效性
             if start_topics >= end_topics:
                 st.error("起始主题数必须小于结束主题数")
@@ -462,7 +757,8 @@ def render_model_trainer():
                         start=start_topics,
                         end=end_topics,
                         step=step,
-                        callbacks=callbacks  # 传递回调参数
+                        random_state=search_random_state,
+                        callbacks=callbacks
                     )
                     
                     # 确保进度达到100%
@@ -542,7 +838,7 @@ def render_model_trainer():
                     st.rerun()
     
     # 训练模型按钮
-    if st.button("开始训练LDA模型", key="train_lda_model"):
+    if st.button("🚀 开始训练LDA模型", key="train_lda_model", type="primary"):
         with st.spinner("正在训练LDA模型..."):
             start_time = time.time()
             
@@ -563,15 +859,21 @@ def render_model_trainer():
                 'status_text': status_text
             }
             
-            # 训练模型
+            # 训练模型（传递所有参数）
             model = analyzer.train_model(
                 num_topics=st.session_state.num_topics,
                 iterations=st.session_state.iterations,
                 passes=st.session_state.passes,
                 chunksize=chunksize if show_advanced else None,
-                alpha=alpha if show_advanced else 'auto',
-                eta=eta if show_advanced else 'auto',
-                callbacks=callbacks  # 传递包含UI元素的字典
+                alpha=alpha,
+                eta=eta,
+                eval_every=eval_every if show_advanced else 10,
+                random_state=random_state if show_advanced else 42,
+                minimum_probability=minimum_probability if show_advanced else 0.01,
+                decay=decay if show_advanced else 0.5,
+                offset=offset if show_advanced else 1.0,
+                gamma_threshold=gamma_threshold if show_advanced else 0.001,
+                callbacks=callbacks
             )
             
             # 手动更新进度到100%
@@ -602,13 +904,19 @@ def render_model_trainer():
             log_message(f"LDA模型训练完成，主题数: {st.session_state.num_topics}，耗时: {elapsed_time:.2f}秒", level="success")
     
     # 加载已有模型
-    with st.expander("加载已有模型", expanded=False):
+    with st.expander("📂 加载已有模型", expanded=False):
+        st.markdown("💡 加载之前保存的模型，可以继续分析或对比不同参数的结果。")
+        
+        # 检查models目录是否存在
+        if not os.path.exists("models"):
+            os.makedirs("models")
+        
         model_files = [f for f in os.listdir("models") if f.endswith(".gensim")]
         
         if model_files:
             selected_model = st.selectbox("选择模型文件", model_files, key="model_file_select")
             
-            if st.button("加载模型", key="load_model"):
+            if st.button("📂 加载模型", key="load_model"):
                 with st.spinner("正在加载模型..."):
                     model_path = os.path.join("models", selected_model[:-7])  # 去掉.gensim后缀
                     
@@ -630,22 +938,25 @@ def render_model_trainer():
                         st.session_state.training_complete = True
                         st.session_state.model_path = model_path
                         
-                        st.success(f"成功加载模型: {selected_model}")
+                        st.success(f"✅ 成功加载模型: {selected_model}")
                         log_message(f"已加载模型: {selected_model}", level="success")
                     else:
                         st.error("模型加载失败")
         else:
-            st.info("没有找到可用的模型文件")
+            st.info("📭 没有找到可用的模型文件。训练模型后会自动保存到 models 目录。")
     
     # 显示训练结果
     if st.session_state.training_complete and st.session_state.lda_model:
         st.subheader("模型训练结果")
         
+        # 获取模型实际的主题数量（从模型本身获取，而不是session_state）
+        actual_num_topics = st.session_state.lda_model.num_topics
+        
         # 显示模型基本信息
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.metric("主题数量", st.session_state.num_topics)
+            st.metric("主题数量", actual_num_topics)
         
         with col2:
             coherence = st.session_state.coherence_score
@@ -664,8 +975,8 @@ def render_model_trainer():
         # 显示主题关键词
         st.subheader("主题关键词")
         
-        # 创建选项卡显示每个主题的关键词
-        topic_tabs = st.tabs([f"主题 {i+1}" for i in range(st.session_state.num_topics)])
+        # 创建选项卡显示每个主题的关键词（使用模型实际的主题数）
+        topic_tabs = st.tabs([f"主题 {i+1}" for i in range(actual_num_topics)])
         
         for i, tab in enumerate(topic_tabs):
             with tab:
