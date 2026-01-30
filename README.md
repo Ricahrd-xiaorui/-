@@ -41,6 +41,22 @@
 pip install -r requirements.txt
 ```
 
+### 下载中文字体（重要！）
+
+为了确保词云能够正确显示中文，需要下载中文字体文件：
+
+**方法1：使用自动下载脚本（推荐）**
+```bash
+python download_font.py
+```
+
+**方法2：手动下载**
+- 访问 [Noto Sans CJK SC](https://github.com/notofonts/noto-cjk/tree/main/Sans/OTF/SimplifiedChinese)
+- 下载 `NotoSansCJKsc-Regular.otf` 文件
+- 将文件放入 `fonts/` 目录
+
+详细说明请查看 [fonts/README.md](fonts/README.md)
+
 ### 运行应用
 
 ```bash
@@ -136,6 +152,25 @@ streamlit run app.py
 - 主题数量一般设置为4-10个较为合适
 - 页面刷新会导致数据丢失，请及时保存
 - 大规模文本分析可能需要较长处理时间
+
+## 🐛 常见问题
+
+### 词云显示方框/乱码
+
+**原因**：系统缺少中文字体文件
+
+**解决方案**：
+1. 运行 `python download_font.py` 自动下载字体
+2. 或手动下载字体文件到 `fonts/` 目录（详见 [fonts/README.md](fonts/README.md)）
+3. 重启应用
+
+### Streamlit Cloud部署后词云无法显示中文
+
+**解决方案**：
+1. 确保 `fonts/` 目录和字体文件已提交到Git仓库
+2. 确保 `packages.txt` 文件存在于项目根目录
+3. 在Streamlit Cloud上重新部署应用
+4. 查看部署日志确认字体加载情况
 
 ## 🧪 测试
 

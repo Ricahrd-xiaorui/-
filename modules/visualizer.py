@@ -30,6 +30,20 @@ def get_system_font_path():
     import platform
     import matplotlib.font_manager as fm
     
+    # 优先检查项目fonts目录（用于Streamlit Cloud部署）
+    project_font_paths = [
+        "fonts/NotoSansSC-Regular.otf",
+        "fonts/NotoSansCJKsc-Regular.otf",
+        "fonts/SourceHanSansSC-Regular.otf",
+        "fonts/simhei.ttf",
+        "fonts/msyh.ttc",
+    ]
+    
+    for font_path in project_font_paths:
+        if os.path.exists(font_path):
+            log_message(f"使用项目字体: {font_path}", level="info")
+            return font_path
+    
     system = platform.system()
     
     # 优先使用matplotlib检测到的中文字体
@@ -45,6 +59,7 @@ def get_system_font_path():
     # 从matplotlib字体管理器中查找
     for font in fm.fontManager.ttflist:
         if font.name in chinese_font_names:
+            log_message(f"使用系统字体: {font.fname}", level="info")
             return font.fname
     
     # 备用：直接检查常见字体文件路径
@@ -74,9 +89,11 @@ def get_system_font_path():
     # 检查字体文件是否存在
     for font_path in font_paths:
         if os.path.exists(font_path):
+            log_message(f"使用系统字体: {font_path}", level="info")
             return font_path
     
     # 如果没有找到，返回None（WordCloud会使用默认字体）
+    log_message("未找到中文字体，词云可能无法正确显示中文", level="warning")
     return None
 
 class LDAVisualizer:
