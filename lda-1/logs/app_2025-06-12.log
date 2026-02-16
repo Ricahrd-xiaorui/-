@@ -1,0 +1,168 @@
+2025-06-12 16:51:41,171 - jieba - DEBUG - Building prefix dict from the default dictionary ...
+2025-06-12 16:51:41,173 - jieba - DEBUG - Loading model from cache C:\Users\K6436\AppData\Local\Temp\jieba.cache
+2025-06-12 16:51:42,093 - jieba - DEBUG - Loading model cost 0.922 seconds.
+2025-06-12 16:51:42,094 - jieba - DEBUG - Prefix dict has been built successfully.
+2025-06-12 16:51:44,082 - gensim.corpora.dictionary - INFO - adding document #0 to Dictionary<0 unique tokens: []>
+2025-06-12 16:51:44,175 - gensim.corpora.dictionary - INFO - built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)
+2025-06-12 16:51:44,221 - gensim.utils - INFO - Dictionary lifecycle event {'msg': "built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)", 'datetime': '2025-06-12T16:51:44.176497', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 16:51:44,235 - gensim.corpora.dictionary - INFO - discarding 14004 tokens: [('201838', 1), ('201851', 1), ('CLI141489047', 1), ('httpswwwpkulawcomlarc3eea8602d169c9f5a52c68d8d538857bdfbhtml', 1), ('一址', 1), ('一照', 1), ('丁二醇', 1), ('专利权', 1), ('丙烯酸', 1), ('中瑞元', 1)]...
+2025-06-12 16:51:44,236 - gensim.corpora.dictionary - INFO - keeping 6340 tokens which were in no less than 2 and no more than 45 (=80.0%) documents
+2025-06-12 16:51:44,247 - gensim.corpora.dictionary - INFO - resulting dictionary: Dictionary<6340 unique tokens: ['20174', '2018', '2020', '2022', 'PE']...>
+2025-06-12 16:56:24,570 - gensim.models.ldamodel - INFO - using autotuned alpha, starting with [0.5, 0.5]
+2025-06-12 16:56:24,572 - gensim.models.ldamodel - INFO - using serial LDA version on this node
+2025-06-12 16:56:24,574 - gensim.models.ldamodel - INFO - running online (multi-pass) LDA training, 2 topics, 5 passes over the supplied corpus of 57 documents, updating model once every 57 documents, evaluating perplexity every 57 documents, iterating 50x with a convergence threshold of 0.001000
+2025-06-12 16:56:24,575 - gensim.models.ldamodel - WARNING - too few updates, training might not converge; consider increasing the number of passes or iterations to improve accuracy
+2025-06-12 16:57:11,987 - gensim.models.ldamodel - INFO - -9.162 per-word bound, 573.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:11,990 - gensim.models.ldamodel - INFO - PROGRESS: pass 0, at document #57/57
+2025-06-12 16:57:12,068 - gensim.models.ldamodel - INFO - optimized alpha [0.77603066, 0.8955692]
+2025-06-12 16:57:12,071 - gensim.models.ldamodel - INFO - topic #0 (0.776): 0.012*"产业" + 0.011*"政府" + 0.008*"科技" + 0.008*"芜湖" + 0.007*"新能源" + 0.007*"2015" + 0.007*"研发" + 0.006*"材料" + 0.006*"制造" + 0.006*"生产"
+2025-06-12 16:57:12,073 - gensim.models.ldamodel - INFO - topic #1 (0.896): 0.013*"科技" + 0.012*"产业" + 0.011*"创新" + 0.011*"新能源" + 0.009*"苏州市" + 0.007*"生产" + 0.007*"研发" + 0.006*"制造" + 0.006*"材料" + 0.005*"装备"
+2025-06-12 16:57:12,073 - gensim.models.ldamodel - INFO - topic diff=1.066790, rho=1.000000
+2025-06-12 16:57:12,346 - gensim.models.ldamodel - INFO - -7.630 per-word bound, 198.1 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:12,347 - gensim.models.ldamodel - INFO - PROGRESS: pass 1, at document #57/57
+2025-06-12 16:57:12,420 - gensim.models.ldamodel - WARNING - updated prior is not positive
+2025-06-12 16:57:12,420 - gensim.models.ldamodel - INFO - optimized alpha [0.77603066, 0.8955692]
+2025-06-12 16:57:12,422 - gensim.models.ldamodel - INFO - topic #0 (0.776): 0.013*"政府" + 0.012*"产业" + 0.009*"芜湖" + 0.009*"2015" + 0.007*"生产" + 0.007*"材料" + 0.006*"生产线" + 0.006*"科技" + 0.006*"研发" + 0.005*"投资"
+2025-06-12 16:57:12,423 - gensim.models.ldamodel - INFO - topic #1 (0.896): 0.014*"科技" + 0.012*"产业" + 0.012*"新能源" + 0.012*"创新" + 0.011*"苏州市" + 0.007*"研发" + 0.007*"制造" + 0.006*"生产" + 0.006*"中心" + 0.005*"20092011"
+2025-06-12 16:57:12,424 - gensim.models.ldamodel - INFO - topic diff=0.229160, rho=0.577350
+2025-06-12 16:57:12,688 - gensim.models.ldamodel - INFO - -7.559 per-word bound, 188.6 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:12,689 - gensim.models.ldamodel - INFO - PROGRESS: pass 2, at document #57/57
+2025-06-12 16:57:12,762 - gensim.models.ldamodel - WARNING - updated prior is not positive
+2025-06-12 16:57:12,762 - gensim.models.ldamodel - INFO - optimized alpha [0.77603066, 0.8955692]
+2025-06-12 16:57:12,766 - gensim.models.ldamodel - INFO - topic #0 (0.776): 0.013*"政府" + 0.011*"产业" + 0.009*"芜湖" + 0.009*"2015" + 0.008*"生产" + 0.007*"材料" + 0.007*"生产线" + 0.006*"2016" + 0.006*"研发" + 0.006*"产品"
+2025-06-12 16:57:13,028 - gensim.models.ldamodel - INFO - topic #1 (0.896): 0.015*"科技" + 0.013*"产业" + 0.013*"新能源" + 0.012*"创新" + 0.011*"苏州市" + 0.007*"研发" + 0.007*"制造" + 0.006*"20092011" + 0.006*"中心" + 0.005*"生产"
+2025-06-12 16:57:13,029 - gensim.models.ldamodel - INFO - topic diff=0.147204, rho=0.500000
+2025-06-12 16:57:14,061 - gensim.models.ldamodel - INFO - -7.529 per-word bound, 184.7 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:14,070 - gensim.models.ldamodel - INFO - PROGRESS: pass 3, at document #57/57
+2025-06-12 16:57:14,258 - gensim.models.ldamodel - WARNING - updated prior is not positive
+2025-06-12 16:57:14,263 - gensim.models.ldamodel - INFO - optimized alpha [0.77603066, 0.8955692]
+2025-06-12 16:57:14,266 - gensim.models.ldamodel - INFO - topic #0 (0.776): 0.013*"政府" + 0.011*"产业" + 0.010*"芜湖" + 0.009*"2015" + 0.008*"生产" + 0.008*"材料" + 0.007*"生产线" + 0.006*"2016" + 0.006*"新型" + 0.006*"产品"
+2025-06-12 16:57:14,270 - gensim.models.ldamodel - INFO - topic #1 (0.896): 0.015*"科技" + 0.013*"产业" + 0.013*"新能源" + 0.012*"创新" + 0.012*"苏州市" + 0.007*"研发" + 0.007*"制造" + 0.006*"20092011" + 0.006*"中心" + 0.005*"生产"
+2025-06-12 16:57:14,274 - gensim.models.ldamodel - INFO - topic diff=0.093524, rho=0.447214
+2025-06-12 16:57:14,785 - gensim.models.ldamodel - INFO - -7.514 per-word bound, 182.7 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:14,789 - gensim.models.ldamodel - INFO - PROGRESS: pass 4, at document #57/57
+2025-06-12 16:57:14,905 - gensim.models.ldamodel - WARNING - updated prior is not positive
+2025-06-12 16:57:14,907 - gensim.models.ldamodel - INFO - optimized alpha [0.77603066, 0.8955692]
+2025-06-12 16:57:14,910 - gensim.models.ldamodel - INFO - topic #0 (0.776): 0.014*"政府" + 0.011*"产业" + 0.010*"芜湖" + 0.009*"2015" + 0.009*"生产" + 0.008*"材料" + 0.007*"生产线" + 0.006*"2016" + 0.006*"新型" + 0.006*"产品"
+2025-06-12 16:57:14,912 - gensim.models.ldamodel - INFO - topic #1 (0.896): 0.015*"科技" + 0.013*"产业" + 0.013*"新能源" + 0.013*"创新" + 0.012*"苏州市" + 0.007*"研发" + 0.007*"制造" + 0.006*"20092011" + 0.006*"中心" + 0.005*"工业"
+2025-06-12 16:57:14,913 - gensim.models.ldamodel - INFO - topic diff=0.061670, rho=0.408248
+2025-06-12 16:57:14,924 - gensim.utils - INFO - LdaModel lifecycle event {'msg': 'trained LdaModel<num_terms=6340, num_topics=2, decay=0.5, chunksize=2000> in 50.35s', 'datetime': '2025-06-12T16:57:14.924477', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 16:57:15,400 - gensim.models.ldamodel - INFO - -7.506 per-word bound, 181.8 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 16:57:15,412 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:12:51,369 - jieba - DEBUG - Building prefix dict from the default dictionary ...
+2025-06-12 17:12:51,370 - jieba - DEBUG - Loading model from cache C:\Users\K6436\AppData\Local\Temp\jieba.cache
+2025-06-12 17:12:52,025 - jieba - DEBUG - Loading model cost 0.655 seconds.
+2025-06-12 17:12:52,026 - jieba - DEBUG - Prefix dict has been built successfully.
+2025-06-12 17:12:53,431 - gensim.corpora.dictionary - INFO - adding document #0 to Dictionary<0 unique tokens: []>
+2025-06-12 17:12:53,504 - gensim.corpora.dictionary - INFO - built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)
+2025-06-12 17:12:53,550 - gensim.utils - INFO - Dictionary lifecycle event {'msg': "built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)", 'datetime': '2025-06-12T17:12:53.504159', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 17:12:53,577 - gensim.corpora.dictionary - INFO - discarding 14004 tokens: [('201838', 1), ('201851', 1), ('CLI141489047', 1), ('httpswwwpkulawcomlarc3eea8602d169c9f5a52c68d8d538857bdfbhtml', 1), ('一址', 1), ('一照', 1), ('丁二醇', 1), ('专利权', 1), ('丙烯酸', 1), ('中瑞元', 1)]...
+2025-06-12 17:12:53,578 - gensim.corpora.dictionary - INFO - keeping 6340 tokens which were in no less than 2 and no more than 45 (=80.0%) documents
+2025-06-12 17:12:53,587 - gensim.corpora.dictionary - INFO - resulting dictionary: Dictionary<6340 unique tokens: ['20174', '2018', '2020', '2022', 'PE']...>
+2025-06-12 17:13:37,480 - gensim.models.ldamodel - INFO - -7.462 per-word bound, 176.4 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:13:37,486 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:14:21,083 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:14:23,585 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:14:23,594 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:14:23,836 - gensim.models.ldamodel - INFO - -7.358 per-word bound, 164.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:14:23,841 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:15:07,704 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:15:10,344 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:15:10,352 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:15:10,608 - gensim.models.ldamodel - INFO - -7.345 per-word bound, 162.6 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:15:10,614 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:15:54,288 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:15:56,897 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:15:56,906 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:15:57,311 - gensim.models.ldamodel - INFO - -7.272 per-word bound, 154.6 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:15:57,318 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:16:42,488 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:16:43,842 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:16:43,846 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:16:43,973 - gensim.models.ldamodel - INFO - -7.269 per-word bound, 154.3 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:16:43,978 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:17:30,482 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:17:31,846 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:17:31,850 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:17:31,986 - gensim.models.ldamodel - INFO - -7.275 per-word bound, 154.8 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:17:31,991 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:07,027 - gensim.models.ldamodel - INFO - -7.238 per-word bound, 151.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:07,032 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:07,220 - gensim.models.ldamodel - INFO - -7.266 per-word bound, 153.9 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:07,226 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:07,409 - gensim.models.ldamodel - INFO - -7.248 per-word bound, 152.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:07,415 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:07,618 - gensim.models.ldamodel - INFO - -7.167 per-word bound, 143.7 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:07,624 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:07,828 - gensim.models.ldamodel - INFO - -7.202 per-word bound, 147.2 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:07,834 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:08,096 - gensim.models.ldamodel - INFO - -7.203 per-word bound, 147.4 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:08,104 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:08,428 - gensim.models.ldamodel - INFO - -7.221 per-word bound, 149.2 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:08,435 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:18:08,721 - gensim.models.ldamodel - INFO - -7.173 per-word bound, 144.3 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:18:08,729 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:42:11,426 - jieba - DEBUG - Building prefix dict from the default dictionary ...
+2025-06-12 17:42:11,428 - jieba - DEBUG - Loading model from cache C:\Users\K6436\AppData\Local\Temp\jieba.cache
+2025-06-12 17:42:12,154 - jieba - DEBUG - Loading model cost 0.725 seconds.
+2025-06-12 17:42:12,156 - jieba - DEBUG - Prefix dict has been built successfully.
+2025-06-12 17:42:13,740 - gensim.corpora.dictionary - INFO - adding document #0 to Dictionary<0 unique tokens: []>
+2025-06-12 17:42:13,815 - gensim.corpora.dictionary - INFO - built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)
+2025-06-12 17:42:13,870 - gensim.utils - INFO - Dictionary lifecycle event {'msg': "built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)", 'datetime': '2025-06-12T17:42:13.816201', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 17:42:13,878 - gensim.corpora.dictionary - INFO - discarding 14004 tokens: [('201838', 1), ('201851', 1), ('CLI141489047', 1), ('httpswwwpkulawcomlarc3eea8602d169c9f5a52c68d8d538857bdfbhtml', 1), ('一址', 1), ('一照', 1), ('丁二醇', 1), ('专利权', 1), ('丙烯酸', 1), ('中瑞元', 1)]...
+2025-06-12 17:42:13,879 - gensim.corpora.dictionary - INFO - keeping 6340 tokens which were in no less than 2 and no more than 45 (=80.0%) documents
+2025-06-12 17:42:13,886 - gensim.corpora.dictionary - INFO - resulting dictionary: Dictionary<6340 unique tokens: ['20174', '2018', '2020', '2022', 'PE']...>
+2025-06-12 17:43:01,342 - gensim.models.ldamodel - INFO - -7.510 per-word bound, 182.3 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:43:01,349 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:43:50,047 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:43:52,935 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:43:52,943 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:43:53,210 - gensim.models.ldamodel - INFO - -7.418 per-word bound, 171.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:43:53,218 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:44:41,432 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:44:44,543 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:44:44,552 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:44:44,803 - gensim.models.ldamodel - INFO - -7.364 per-word bound, 164.8 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:44:44,812 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:45:32,836 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:45:35,566 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:45:35,575 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:45:35,838 - gensim.models.ldamodel - INFO - -7.334 per-word bound, 161.3 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:36,156 - gensim.models.ldamodel - INFO - -7.353 per-word bound, 163.5 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:36,437 - gensim.models.ldamodel - INFO - -7.403 per-word bound, 169.2 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:36,694 - gensim.models.ldamodel - INFO - -7.344 per-word bound, 162.5 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:37,017 - gensim.models.ldamodel - INFO - -7.365 per-word bound, 164.9 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:37,316 - gensim.models.ldamodel - INFO - -7.337 per-word bound, 161.6 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:37,742 - gensim.models.ldamodel - INFO - -7.294 per-word bound, 157.0 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:38,084 - gensim.models.ldamodel - INFO - -7.308 per-word bound, 158.5 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:38,463 - gensim.models.ldamodel - INFO - -7.284 per-word bound, 155.8 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:45:38,488 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:46:26,507 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:46:29,911 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:46:29,919 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:46:30,553 - gensim.models.ldamodel - INFO - -7.293 per-word bound, 156.9 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:46:30,566 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:47:18,341 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:47:21,756 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:47:21,765 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 17:47:22,473 - gensim.models.ldamodel - INFO - -7.312 per-word bound, 158.9 perplexity estimate based on a held-out corpus of 57 documents with 89174 words
+2025-06-12 17:47:22,509 - gensim.topic_coherence.probability_estimation - INFO - using ParallelWordOccurrenceAccumulator<processes=19, batch_size=64> to estimate probabilities from sliding windows
+2025-06-12 17:48:10,792 - gensim.topic_coherence.text_analysis - INFO - 1 batches submitted to accumulate stats from 64 documents (106796 virtual)
+2025-06-12 17:48:14,315 - gensim.topic_coherence.text_analysis - INFO - 19 accumulators retrieved from output queue
+2025-06-12 17:48:14,327 - gensim.topic_coherence.text_analysis - INFO - accumulated word occurrence stats for 106959 virtual documents
+2025-06-12 18:43:08,157 - jieba - DEBUG - Building prefix dict from the default dictionary ...
+2025-06-12 18:43:08,160 - jieba - DEBUG - Loading model from cache C:\Users\K6436\AppData\Local\Temp\jieba.cache
+2025-06-12 18:43:08,849 - jieba - DEBUG - Loading model cost 0.689 seconds.
+2025-06-12 18:43:08,850 - jieba - DEBUG - Prefix dict has been built successfully.
+2025-06-12 18:43:10,283 - gensim.corpora.dictionary - INFO - adding document #0 to Dictionary<0 unique tokens: []>
+2025-06-12 18:43:10,364 - gensim.corpora.dictionary - INFO - built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)
+2025-06-12 18:43:10,416 - gensim.utils - INFO - Dictionary lifecycle event {'msg': "built Dictionary<20344 unique tokens: ['20174', '2018', '201838', '201851', '2020']...> from 57 documents (total 113009 corpus positions)", 'datetime': '2025-06-12T18:43:10.364936', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 18:43:10,437 - gensim.corpora.dictionary - INFO - discarding 14004 tokens: [('201838', 1), ('201851', 1), ('CLI141489047', 1), ('httpswwwpkulawcomlarc3eea8602d169c9f5a52c68d8d538857bdfbhtml', 1), ('一址', 1), ('一照', 1), ('丁二醇', 1), ('专利权', 1), ('丙烯酸', 1), ('中瑞元', 1)]...
+2025-06-12 18:43:10,454 - gensim.corpora.dictionary - INFO - keeping 6340 tokens which were in no less than 2 and no more than 45 (=80.0%) documents
+2025-06-12 18:43:10,464 - gensim.corpora.dictionary - INFO - resulting dictionary: Dictionary<6340 unique tokens: ['20174', '2018', '2020', '2022', 'PE']...>
+2025-06-12 18:48:54,481 - gensim.corpora.dictionary - INFO - adding document #0 to Dictionary<0 unique tokens: []>
+2025-06-12 18:48:54,538 - gensim.corpora.dictionary - INFO - built Dictionary<21147 unique tokens: ['10', '11', '12', '13', '14']...> from 57 documents (total 156073 corpus positions)
+2025-06-12 18:48:54,538 - gensim.utils - INFO - Dictionary lifecycle event {'msg': "built Dictionary<21147 unique tokens: ['10', '11', '12', '13', '14']...> from 57 documents (total 156073 corpus positions)", 'datetime': '2025-06-12T18:48:54.538368', 'gensim': '4.3.3', 'python': '3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]', 'platform': 'Windows-11-10.0.26100-SP0', 'event': 'created'}
+2025-06-12 18:48:54,547 - gensim.corpora.dictionary - INFO - discarding 14101 tokens: [('201838', 1), ('201851', 1), ('CLI141489047', 1), ('httpswwwpkulawcomlarc3eea8602d169c9f5a52c68d8d538857bdfbhtml', 1), ('一址', 1), ('一照', 1), ('丁二醇', 1), ('专利权', 1), ('丙烯酸', 1), ('中瑞元', 1)]...
+2025-06-12 18:48:54,547 - gensim.corpora.dictionary - INFO - keeping 7046 tokens which were in no less than 2 and no more than 45 (=80.0%) documents
+2025-06-12 18:48:54,554 - gensim.corpora.dictionary - INFO - resulting dictionary: Dictionary<7046 unique tokens: ['10', '11', '12', '13', '14']...>
