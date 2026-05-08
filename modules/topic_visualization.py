@@ -295,6 +295,34 @@ def render_visualizer():
     """渲染可视化分析模块"""
     st.header("可视化分析")
     
+    missing_deps = []
+    try:
+        import plotly
+    except ImportError:
+        missing_deps.append("**plotly** — 热力图、散点图、折线图、网络图等交互式图表")
+    try:
+        import pyLDAvis
+    except ImportError:
+        missing_deps.append("**pyLDAvis** — LDA交互式主题探索可视化")
+    try:
+        from wordcloud import WordCloud
+    except ImportError:
+        missing_deps.append("**wordcloud** — 主题词云图生成")
+    
+    if missing_deps:
+        st.error("""
+❌ **缺少以下必要依赖，部分或全部可视化功能无法使用：**
+
+""" + "\n".join(f"- {dep}" for dep in missing_deps) + """
+
+**请执行以下命令安装缺失的依赖**：
+```bash
+pip install plotly pyLDAvis wordcloud networkx
+```
+
+安装后刷新页面即可使用全部可视化功能。
+""")
+    
     # 功能介绍与操作手册
     with st.expander("📖 功能介绍与操作手册", expanded=False):
         st.markdown("""

@@ -4,15 +4,46 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import plotly.express as px
-import plotly.graph_objects as go
-from wordcloud import WordCloud
+
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    HAS_PLOTLY = True
+except ImportError:
+    HAS_PLOTLY = False
+    px = None
+    go = None
+
+try:
+    from wordcloud import WordCloud
+    HAS_WORDCLOUD = True
+except ImportError:
+    HAS_WORDCLOUD = False
+    WordCloud = None
+
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
-import umap
-import networkx as nx
-import pyLDAvis
-import pyLDAvis.gensim_models
+try:
+    import umap
+    HAS_UMAP = True
+except ImportError:
+    HAS_UMAP = False
+    umap = None
+
+try:
+    import networkx as nx
+    HAS_NETWORKX_VIZ = True
+except ImportError:
+    HAS_NETWORKX_VIZ = False
+    nx = None
+
+try:
+    import pyLDAvis
+    import pyLDAvis.gensim_models
+    HAS_PYLDAVIS = True
+except ImportError:
+    HAS_PYLDAVIS = False
+    pyLDAvis = None
 import tempfile
 from pathlib import Path
 import time

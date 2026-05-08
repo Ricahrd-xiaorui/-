@@ -269,6 +269,21 @@ def render_semantic_network():
     
     st.header("🕸️ 语义网络分析")
     
+    if not HAS_NETWORKX:
+        st.error("""
+        ❌ **缺少必要依赖：networkx**
+        
+        语义网络功能需要安装 `networkx` 库才能使用。
+        
+        **请执行以下命令安装**：
+        ```bash
+        pip install networkx
+        ```
+        
+        安装后刷新页面即可使用本模块。
+        """)
+        return
+    
     # 功能介绍与操作手册
     with st.expander("📖 功能介绍与操作手册", expanded=False):
         st.markdown("""
